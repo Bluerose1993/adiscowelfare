@@ -100,6 +100,21 @@ class WelfareWorkflowTest extends TestCase
         $this->get(route('login'))->assertOk()->assertSee('Adisadel Welfare Portal');
     }
 
+    public function test_invalid_login_is_displayed_in_system_popup(): void
+    {
+        $response = $this->from(route('login'))->post(route('login.store'), [
+            'login' => 'unknown-user',
+            'password' => 'wrong-password',
+        ]);
+
+        $response->assertRedirect(route('login'))->assertSessionHasErrors('login');
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertSee('systemFeedbackModal', false)
+            ->assertSee('The login details are invalid or the account is inactive.')
+            ->assertSee('system-popup-visible', false);
+    }
+
     public function test_staff_can_edit_profile_but_cannot_change_staff_id(): void
     {
         $staff = $this->createStaffWithUser('LOCKED01', 'Original Name');

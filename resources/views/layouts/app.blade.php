@@ -158,5 +158,23 @@
 </div>
 @endauth
 @stack('scripts')
+@if($popupType)
+<script>
+(() => {
+    const popup = document.getElementById('systemFeedbackModal');
+    if (!popup) return;
+    const close = () => {
+        popup.classList.remove('show', 'system-popup-visible');
+        popup.style.display = 'none';
+        popup.setAttribute('aria-hidden', 'true');
+    };
+    popup.style.display = 'flex';
+    popup.classList.add('show', 'system-popup-visible');
+    popup.setAttribute('aria-hidden', 'false');
+    popup.querySelectorAll('[data-dismiss="modal"]').forEach(button => button.addEventListener('click', close));
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') close(); });
+})();
+</script>
+@endif
 </body>
 </html>

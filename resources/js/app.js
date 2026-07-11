@@ -10,11 +10,6 @@ window.Chart = Chart;
 DataTable(window, $);
 
 document.addEventListener('DOMContentLoaded', () => {
-    const feedbackModal = document.getElementById('systemFeedbackModal');
-    if (feedbackModal) {
-        $(feedbackModal).modal({ backdrop: 'static', keyboard: true, show: true });
-    }
-
     const currentPath = window.location.pathname.replace(/\/$/, '');
     document.querySelectorAll('.nav-sidebar .nav-link[href]').forEach((link) => {
         const linkPath = new URL(link.href, window.location.origin).pathname.replace(/\/$/, '');

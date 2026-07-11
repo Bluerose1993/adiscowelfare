@@ -283,6 +283,9 @@ label { color: #3d485a; font-size: .84rem; font-weight: 700; }
 .session-countdown-clock span { margin-top: .18rem; font-size: .62rem; font-weight: 700; text-transform: uppercase; }
 @media (max-width: 575.98px) { .session-timeout-warning { grid-template-columns: 1fr; justify-items: center; } }
 .error-modal-content { border: 0; border-radius: 18px; overflow: hidden; box-shadow: 0 24px 80px rgba(127,29,29,.25); }
+#systemFeedbackModal.system-popup-visible { position: fixed; inset: 0; z-index: 11000; display: flex !important; align-items: center; justify-content: center; padding: 1rem; overflow-y: auto; background: rgba(15,23,42,.68); opacity: 1; backdrop-filter: blur(6px); }
+#systemFeedbackModal.system-popup-visible .modal-dialog { width: min(500px, 100%); margin: auto; transform: none; }
+#systemFeedbackModal.system-popup-visible .modal-content { background: #fff; }
 .error-modal-content .modal-header { align-items: center; gap: .9rem; color: #7f1d1d; background: #fef2f2; border-bottom-color: #fecaca; }
 .error-modal-icon { display: grid; place-items: center; flex: 0 0 44px; height: 44px; border-radius: 50%; color: #fff; background: #dc2626; }
 .debug-mode-banner { position: sticky; top: 0; z-index: 1100; display: flex; align-items: center; justify-content: center; gap: .65rem; min-height: 38px; padding: .4rem 1rem; color: #78350f; background: repeating-linear-gradient(135deg,#fef3c7,#fef3c7 12px,#fde68a 12px,#fde68a 24px); border-bottom: 1px solid #f59e0b; font-size: .82rem; }
