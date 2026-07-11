@@ -11,6 +11,7 @@
 @php
     $cards = [
         ['Total Active Staff', $stats['active_staff'], 'bg-info', 'fas fa-users'],
+        ['Completed First Login', $completedFirstLoginCount, 'bg-success', 'fas fa-user-check'],
         ['Dues This Month', number_format($stats['dues_this_month'], 2), 'bg-success', 'fas fa-calendar-check'],
         ['Dues This Year', number_format($stats['dues_this_year'], 2), 'bg-teal', 'fas fa-wallet'],
         ['Total Dues on Record', number_format($stats['dues_all_time'], 2), 'bg-primary', 'fas fa-coins'],

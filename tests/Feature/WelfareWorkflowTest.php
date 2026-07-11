@@ -482,13 +482,13 @@ class WelfareWorkflowTest extends TestCase
         $this->assertNotNull(\App\Models\DuesPaymentReceipt::withTrashed()->findOrFail($receiptId)->deleted_at);
     }
 
-    public function test_debug_mode_can_delete_staff_and_disable_login(): void
+    public function test_debug_mode_completely_removes_staff_and_login(): void
     {
         \App\Models\Setting::query()->updateOrCreate(['key'=>'system_mode'], ['value'=>'debug','type'=>'string']);
         $admin=$this->admin(); $staff=$this->createStaffWithUser('DEMO-STF','Demo Staff'); $userId=$staff->user_id;
         $this->actingAs($admin)->post(route('admin.staff.deletion-request',$staff), ['reason'=>'Demo record','password'=>'ChangeMe123!'])->assertSessionHasNoErrors();
-        $this->assertNotNull(Staff::withTrashed()->findOrFail($staff->id)->deleted_at);
-        $this->assertSame('inactive', User::findOrFail($userId)->status);
+        $this->assertNull(Staff::withTrashed()->find($staff->id));
+        $this->assertNull(User::find($userId));
     }
 
     public function test_system_mode_switch_requires_admin_password(): void

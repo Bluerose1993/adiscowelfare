@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Benefit;
 use App\Models\BenefitRequest;
 use App\Models\DuesPayment;
+use App\Models\Staff;
 use App\Services\DashboardStatisticsService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -24,6 +25,10 @@ class DashboardController extends Controller
             'recentBenefits' => Benefit::query()->with(['staff', 'benefitType'])->where('status', Benefit::STATUS_PAID)->latest('payment_date')->limit(8)->get(),
             'newRequests' => BenefitRequest::query()->with(['staff', 'benefitType'])->where('status', BenefitRequest::STATUS_SUBMITTED)->latest()->limit(8)->get(),
             'pendingBenefits' => Benefit::query()->with(['staff', 'benefitType'])->whereIn('status', [Benefit::STATUS_PENDING, Benefit::STATUS_APPROVED])->latest()->limit(8)->get(),
+            'completedFirstLoginCount' => Staff::query()->active()->whereHas('user', fn ($query) => $query
+                ->where('status', 'active')
+                ->where('must_change_password', false)
+                ->whereNotNull('last_login_at'))->count(),
         ]);
     }
 }

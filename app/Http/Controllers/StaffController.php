@@ -18,6 +18,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Spatie\Permission\Models\Permission;
 
@@ -183,11 +184,12 @@ class StaffController extends Controller
     public function requestDeletion(Request $request, Staff $staff, AuditService $audit): RedirectResponse
     {
         $this->authorize('delete', $staff);
+        abort_if($staff->user_id === $request->user()->id, 422, 'You cannot delete the staff profile linked to your current administrator account.');
         $validated = $request->validate(['reason' => ['required','string','max:500'], 'password' => ['required','current_password']]);
         if (Setting::value('system_mode', 'production') === 'debug') {
-            $old = $staff->toArray();
-            $this->deleteStaff($staff);
-            $audit->log('staff_deleted_debug_mode', $staff, $old, ['reason'=>$validated['reason']], $request);
+            $staffRecordId = $staff->id;
+            $this->deleteStaff($staff, $request->user()->id);
+            $audit->log('staff_deleted_debug_mode', null, [], ['deleted_staff_record_id'=>$staffRecordId,'reason'=>$validated['reason']], $request);
             return redirect()->route('admin.staff.index')->with('success', 'Staff record deleted immediately in Debug mode.');
         }
         if ($staff->deletionRequests()->where('status','pending')->exists()) return back()->withErrors(['reason'=>'A staff deletion request is already pending.']);
@@ -202,10 +204,12 @@ class StaffController extends Controller
         abort_if($deletionRequest->requested_by === $request->user()->id, 403, 'You cannot approve your own request.');
         $request->validate(['password'=>['required','current_password']]);
         $staff = $deletionRequest->staff; abort_if(!$staff || $staff->trashed(),422);
-        $old=$staff->toArray(); $this->deleteStaff($staff);
-        $deletionRequest->update(['status'=>'approved','reviewed_by'=>$request->user()->id,'reviewed_at'=>now()]);
-        $audit->log('staff_deletion_approved',$staff,$old,['request_id'=>$deletionRequest->id],$request);
-        return back()->with('success','Staff deletion approved and completed.');
+        abort_if($staff->user_id === $request->user()->id, 422, 'You cannot delete the staff profile linked to your current administrator account.');
+        $staffRecordId = $staff->id;
+        $requestId = $deletionRequest->id;
+        $this->deleteStaff($staff, $request->user()->id);
+        $audit->log('staff_deletion_approved', null, [], ['deleted_staff_record_id'=>$staffRecordId,'request_id'=>$requestId],$request);
+        return redirect()->route('admin.staff.index')->with('success','Staff deletion approved. The staff profile, login, dues, benefits and requests were permanently removed systemwide.');
     }
 
     public function rejectDeletion(Request $request, StaffDeletionRequest $deletionRequest, AuditService $audit): RedirectResponse
@@ -217,9 +221,38 @@ class StaffController extends Controller
         return back()->with('success','Staff deletion request rejected.');
     }
 
-    private function deleteStaff(Staff $staff): void
+    private function deleteStaff(Staff $staff, int $replacementAdminId): void
     {
-        DB::transaction(function () use ($staff) { if ($staff->user) { $staff->user->syncPermissions([]); $staff->user->syncRoles([]); $staff->user->update(['status'=>'inactive']); } $staff->update(['is_active'=>false]); $staff->delete(); });
+        $attachmentPaths = $staff->benefitRequests()->with('attachments')->get()
+            ->flatMap(fn ($benefitRequest) => $benefitRequest->attachments->pluck('path'))
+            ->filter()->values();
+        $user = $staff->user;
+
+        DB::transaction(function () use ($staff, $user, $replacementAdminId) {
+            if ($user) {
+                // Preserve unrelated records created while this person was an administrator,
+                // but transfer their ownership so the login account itself can be removed.
+                DB::table('dues_rates')->where('created_by', $user->id)->update(['created_by' => $replacementAdminId]);
+                DB::table('dues_payments')->where('recorded_by', $user->id)->update(['recorded_by' => $replacementAdminId]);
+                DB::table('dues_payment_receipts')->where('recorded_by', $user->id)->update(['recorded_by' => $replacementAdminId]);
+                DB::table('benefits')->where('created_by', $user->id)->update(['created_by' => $replacementAdminId]);
+                DB::table('import_batches')->where('uploaded_by', $user->id)->update(['uploaded_by' => $replacementAdminId]);
+                DB::table('benefit_request_attachments')->where('uploaded_by', $user->id)->update(['uploaded_by' => $replacementAdminId]);
+                DB::table('dues_payment_deletion_requests')->where('requested_by', $user->id)->update(['requested_by' => $replacementAdminId]);
+                DB::table('staff_deletion_requests')->where('requested_by', $user->id)->update(['requested_by' => $replacementAdminId]);
+                DB::table('benefit_deletion_requests')->where('requested_by', $user->id)->update(['requested_by' => $replacementAdminId]);
+                AuditLog::query()->where('auditable_type', User::class)->where('auditable_id', $user->id)->delete();
+            }
+            AuditLog::query()->where('auditable_type', Staff::class)->where('auditable_id', $staff->id)->delete();
+            $staff->forceDelete();
+            if ($user) {
+                $user->syncPermissions([]);
+                $user->syncRoles([]);
+                $user->delete();
+            }
+        });
+
+        $attachmentPaths->each(fn (string $path) => Storage::disk('public')->delete($path));
     }
 
     private function createLoginAccount(Staff $staff, string $password): User
