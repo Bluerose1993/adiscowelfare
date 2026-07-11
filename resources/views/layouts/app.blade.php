@@ -158,6 +158,5 @@
 </div>
 @endauth
 @stack('scripts')
-@if($popupType)<script>document.addEventListener('DOMContentLoaded',()=>$('#systemFeedbackModal').modal('show'));</script>@endif
 </body>
 </html>

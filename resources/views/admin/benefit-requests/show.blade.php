@@ -1,6 +1,7 @@
 @extends('layouts.app', ['title' => 'Benefit Request'])
 
 @section('content')
+<div class="mb-3"><button class="btn btn-outline-danger" data-toggle="collapse" data-target="#deleteBenefitRequest"><i class="fas fa-trash"></i> Delete Request</button></div><div class="collapse" id="deleteBenefitRequest"><div class="card card-danger"><form method="post" action="{{ route('admin.benefit-requests.deletion-request', $requestRecord) }}" class="card-body deletion-request-form">@csrf<div><strong>Delete this benefit request</strong><small class="d-block text-muted">A second admin must approve in Production mode.</small></div><input name="reason" class="form-control" placeholder="Reason for deletion" required><input name="password" type="password" class="form-control" placeholder="Your password" required><button class="btn btn-danger">Request Delete</button></form></div></div>
 <div class="row">
     <div class="col-lg-7">
         <div class="card"><div class="card-body">

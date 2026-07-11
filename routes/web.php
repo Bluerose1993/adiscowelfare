@@ -81,6 +81,9 @@ Route::middleware(['auth', 'role:Administrator', 'admin.module'])->prefix('admin
     Route::get('benefit-requests', [BenefitRequestController::class, 'adminIndex'])->name('benefit-requests.index');
     Route::get('benefit-requests/{benefitRequest}', [BenefitRequestController::class, 'adminShow'])->name('benefit-requests.show');
     Route::post('benefit-requests/{benefitRequest}/review', [BenefitRequestController::class, 'review'])->name('benefit-requests.review');
+    Route::post('benefit-requests/{benefitRequest}/deletion-request', [BenefitRequestController::class, 'requestDeletion'])->name('benefit-requests.deletion-request');
+    Route::post('benefit-requests/deletion-requests/{deletionRequest}/approve', [BenefitRequestController::class, 'approveDeletion'])->name('benefit-requests.deletion-requests.approve');
+    Route::post('benefit-requests/deletion-requests/{deletionRequest}/reject', [BenefitRequestController::class, 'rejectDeletion'])->name('benefit-requests.deletion-requests.reject');
 
     Route::get('reports/dues', [ReportController::class, 'dues'])->name('reports.dues');
     Route::get('reports/benefits', [ReportController::class, 'benefits'])->name('reports.benefits');

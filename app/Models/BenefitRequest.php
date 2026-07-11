@@ -67,4 +67,9 @@ class BenefitRequest extends Model
     {
         return $this->hasMany(BenefitRequestAttachment::class);
     }
+
+    public function deletionRequests(): HasMany
+    {
+        return $this->hasMany(BenefitRequestDeletionRequest::class);
+    }
 }
