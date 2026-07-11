@@ -214,6 +214,27 @@ label { color: #3d485a; font-size: .84rem; font-weight: 700; }
 .main-footer { border-top: 1px solid var(--welfare-border); color: var(--welfare-muted); background: rgba(255,255,255,.8); }
 
 @media (max-width: 767.98px) {
+    .welfare-sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        height: 100vh;
+        height: 100dvh;
+        max-height: 100dvh;
+        overflow: hidden;
+    }
+    .welfare-sidebar .sidebar {
+        height: calc(100vh - 64px);
+        height: calc(100dvh - 64px);
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    }
+    .welfare-sidebar .nav-sidebar {
+        padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+    }
     .content-header { padding-top: 1rem; }
     .content-header .text-sm-right { margin-top: .75rem; }
     .content-header .btn { margin: .15rem 0; }
