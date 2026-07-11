@@ -6,6 +6,7 @@ use App\Http\Requests\StoreDuesPaymentRequest;
 use App\Models\Benefit;
 use App\Models\DuesPayment;
 use App\Models\DuesPaymentDeletionRequest;
+use App\Models\DuesPaymentReceipt;
 use App\Models\Staff;
 use App\Models\Setting;
 use App\Services\AuditService;
@@ -24,8 +25,8 @@ class DuesPaymentController extends Controller
         $this->authorize('viewAny', DuesPayment::class);
 
         return view('admin.dues.index', [
-            'payments' => DuesPayment::query()->with(['staff', 'recorder', 'deletionRequests' => fn ($query) => $query->where('status', 'pending')])->latest('payment_date')->paginate(50),
-            'pendingDeletionRequests' => DuesPaymentDeletionRequest::query()->where('status', 'pending')->with(['payment.staff', 'requester'])->latest()->get(),
+            'receipts' => DuesPaymentReceipt::query()->with(['staff', 'recorder', 'allocations', 'deletionRequests' => fn ($query) => $query->where('status', 'pending')])->latest('created_at')->paginate(50),
+            'pendingDeletionRequests' => DuesPaymentDeletionRequest::query()->where('status', 'pending')->with(['receipt.staff', 'payment.staff', 'requester'])->latest()->get(),
         ]);
     }
 
@@ -103,21 +104,20 @@ class DuesPaymentController extends Controller
             'reason' => ['required', 'string', 'max:500'],
             'password' => ['required', 'current_password'],
         ]);
+        $receipt = $duesPayment->receipt;
+        abort_if(! $receipt, 422, 'This transaction has no receipt record.');
         if (Setting::value('system_mode', 'production') === 'debug') {
-            $old = $duesPayment->toArray();
-            $duesPayment->forceFill([
-                'deleted_by' => $request->user()->id,
-                'deleted_reason' => '[Debug mode] '.$validated['reason'],
-            ])->save();
-            $duesPayment->delete();
-            $audit->log('dues_payment_deleted_debug_mode', $duesPayment, $old, ['reason' => $validated['reason']], $request);
+            $old = $receipt->load('allocations')->toArray();
+            $this->deleteReceipt($receipt, $request->user()->id, '[Debug mode] '.$validated['reason']);
+            $audit->log('dues_payment_receipt_deleted_debug_mode', $duesPayment, $old, ['receipt_id' => $receipt->id, 'reason' => $validated['reason']], $request);
 
             return back()->with('success', 'Payment deleted immediately because Debug mode is active.');
         }
-        if ($duesPayment->deletionRequests()->where('status', 'pending')->exists()) {
+        if ($receipt->deletionRequests()->where('status', 'pending')->exists()) {
             return back()->withErrors(['reason' => 'A deletion request is already awaiting approval for this payment.']);
         }
-        $deletionRequest = $duesPayment->deletionRequests()->create([
+        $deletionRequest = $receipt->deletionRequests()->create([
+            'dues_payment_id' => $duesPayment->id,
             'requested_by' => $request->user()->id,
             'reason' => $validated['reason'],
             'status' => 'pending',
@@ -133,17 +133,14 @@ class DuesPaymentController extends Controller
         abort_if($deletionRequest->requested_by === $request->user()->id, 403, 'The requesting administrator cannot approve their own deletion request.');
         $request->validate(['password' => ['required', 'current_password']]);
         $payment = $deletionRequest->payment;
-        abort_if(! $payment || $payment->trashed(), 422, 'This payment has already been deleted.');
+        $receipt = $deletionRequest->receipt ?: $payment?->receipt;
+        abort_if(! $payment || ! $receipt || $receipt->trashed(), 422, 'This payment receipt has already been deleted.');
 
-        DB::transaction(function () use ($request, $deletionRequest, $payment, $audit) {
-            $old = $payment->toArray();
-            $payment->forceFill([
-            'deleted_by' => $request->user()->id,
-            'deleted_reason' => $deletionRequest->reason,
-            ])->save();
-            $payment->delete();
+        DB::transaction(function () use ($request, $deletionRequest, $payment, $receipt, $audit) {
+            $old = $receipt->load('allocations')->toArray();
+            $this->deleteReceipt($receipt, $request->user()->id, $deletionRequest->reason);
             $deletionRequest->update(['status' => 'approved', 'reviewed_by' => $request->user()->id, 'reviewed_at' => now()]);
-            $audit->log('dues_payment_deletion_approved', $payment, $old, ['request_id' => $deletionRequest->id, 'reason' => $deletionRequest->reason], $request);
+            $audit->log('dues_payment_receipt_deletion_approved', $payment, $old, ['receipt_id' => $receipt->id, 'request_id' => $deletionRequest->id, 'reason' => $deletionRequest->reason], $request);
         });
 
         return back()->with('success', 'Deletion approved. The payment has been removed and audited.');
@@ -158,5 +155,16 @@ class DuesPaymentController extends Controller
         $audit->log('dues_payment_deletion_rejected', $deletionRequest->payment, [], ['request_id' => $deletionRequest->id], $request);
 
         return back()->with('success', 'Deletion request rejected. The payment remains active.');
+    }
+
+    private function deleteReceipt(DuesPaymentReceipt $receipt, int $userId, string $reason): void
+    {
+        DB::transaction(function () use ($receipt, $userId, $reason) {
+            $receipt->allocations()->get()->each(function (DuesPayment $allocation) use ($userId, $reason) {
+                $allocation->forceFill(['deleted_by' => $userId, 'deleted_reason' => $reason])->save();
+                $allocation->delete();
+            });
+            $receipt->delete();
+        });
     }
 }

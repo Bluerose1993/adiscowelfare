@@ -247,15 +247,19 @@ label { color: #3d485a; font-size: .84rem; font-weight: 700; }
 #staffResults.is-loading { opacity: .52; pointer-events: none; }
 .staff-result-summary { margin-bottom: .75rem; color: var(--welfare-muted); font-size: .86rem; }
 .staff-pagination nav { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .75rem; }
-.session-timeout-warning { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 9999; display: grid; grid-template-columns: auto minmax(220px,320px); align-items: center; gap: 1rem; padding: 1rem 1.15rem; border: 1px solid #fdba74; border-radius: 18px; color: #7c2d12; background: rgba(255,247,237,.98); box-shadow: 0 20px 60px rgba(124,45,18,.22); backdrop-filter: blur(12px); }
+.session-timeout-warning { position: fixed; inset: 0; z-index: 9999; display: grid; grid-template-columns: auto minmax(220px,340px); place-content: center; align-items: center; gap: 1.25rem; padding: 1.5rem; color: #7f1d1d; background: rgba(15,23,42,.72); backdrop-filter: blur(8px); }
+.session-timeout-warning > div:last-child { padding: 1.3rem; border: 1px solid #fca5a5; border-radius: 18px; background: #fff; box-shadow: 0 24px 80px rgba(0,0,0,.3); }
 .session-timeout-warning[hidden] { display: none; }
 .session-timeout-warning p { margin: .2rem 0 0; font-size: .85rem; color: #9a3412; }
-.session-countdown-clock { --countdown-progress: 360deg; display: grid; place-items: center; width: 76px; height: 76px; border-radius: 50%; background: conic-gradient(#ea580c var(--countdown-progress),#fed7aa 0); }
-.session-countdown-clock::before { content: ''; grid-area: 1/1; width: 62px; height: 62px; border-radius: 50%; background: #fff7ed; }
+.session-countdown-clock { --countdown-progress: 360deg; display: grid; place-items: center; width: 130px; height: 130px; border-radius: 50%; background: conic-gradient(#dc2626 var(--countdown-progress),#fecaca 0); box-shadow: 0 20px 60px rgba(220,38,38,.35); }
+.session-countdown-clock::before { content: ''; grid-area: 1/1; width: 108px; height: 108px; border-radius: 50%; background: #fff; }
 .session-countdown-clock > div { grid-area: 1/1; z-index: 1; display: flex; flex-direction: column; align-items: center; line-height: 1; }
-.session-countdown-clock strong { font-size: 1.5rem; }
+.session-countdown-clock strong { color: #b91c1c; font-size: 2.25rem; }
 .session-countdown-clock span { margin-top: .18rem; font-size: .62rem; font-weight: 700; text-transform: uppercase; }
-@media (max-width: 575.98px) { .session-timeout-warning { left: .75rem; right: .75rem; bottom: .75rem; grid-template-columns: auto 1fr; } }
+@media (max-width: 575.98px) { .session-timeout-warning { grid-template-columns: 1fr; justify-items: center; } }
+.error-modal-content { border: 0; border-radius: 18px; overflow: hidden; box-shadow: 0 24px 80px rgba(127,29,29,.25); }
+.error-modal-content .modal-header { align-items: center; gap: .9rem; color: #7f1d1d; background: #fef2f2; border-bottom-color: #fecaca; }
+.error-modal-icon { display: grid; place-items: center; flex: 0 0 44px; height: 44px; border-radius: 50%; color: #fff; background: #dc2626; }
 .debug-mode-banner { position: sticky; top: 0; z-index: 1100; display: flex; align-items: center; justify-content: center; gap: .65rem; min-height: 38px; padding: .4rem 1rem; color: #78350f; background: repeating-linear-gradient(135deg,#fef3c7,#fef3c7 12px,#fde68a 12px,#fde68a 24px); border-bottom: 1px solid #f59e0b; font-size: .82rem; }
 .debug-mode-banner strong { letter-spacing: .08em; }
 .mode-card.mode-production { border-color: #86efac; }
@@ -263,6 +267,9 @@ label { color: #3d485a; font-size: .84rem; font-weight: 700; }
 .mode-switch-layout { display: grid; grid-template-columns: minmax(260px,1fr) auto; align-items: center; gap: 1rem; }
 .mode-switch-form { display: flex; gap: .6rem; }
 .mode-switch-form .form-control { width: 200px; }
+.allocation-chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+.allocation-chips span { padding: .45rem .7rem; border-radius: 999px; color: #075985; background: #e0f2fe; font-size: .78rem; font-weight: 700; }
+.allocation-detail-row td { background: #f8fafc !important; }
 @media (max-width: 767.98px) { .mode-switch-layout { grid-template-columns: 1fr; } .mode-switch-form { flex-direction: column; } .mode-switch-form .form-control { width: 100%; } .debug-mode-banner span { display: none; } }
 
 @media (prefers-reduced-motion: reduce) {

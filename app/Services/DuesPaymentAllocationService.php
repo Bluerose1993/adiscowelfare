@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\DuesPayment;
+use App\Models\DuesPaymentReceipt;
 use Carbon\CarbonImmutable;
 
 class DuesPaymentAllocationService
@@ -16,6 +17,17 @@ class DuesPaymentAllocationService
         $remaining = round((float) $data['amount'], 2);
         $cursor = CarbonImmutable::create((int) $data['payment_year'], (int) $data['payment_month'], 1);
         $payments = [];
+        $receipt = DuesPaymentReceipt::query()->create([
+            'staff_id' => $data['staff_id'],
+            'amount' => $remaining,
+            'starting_year' => $cursor->year,
+            'starting_month' => $cursor->month,
+            'payment_date' => $data['payment_date'],
+            'payment_method' => $data['payment_method'] ?? null,
+            'reference_number' => $data['reference_number'] ?? null,
+            'notes' => $data['notes'] ?? null,
+            'recorded_by' => $userId,
+        ]);
 
         for ($step = 0; $remaining > 0 && $step < 120; $step++, $cursor = $cursor->addMonth()) {
             $expected = $this->dues->expectedForMonth($cursor->year, $cursor->month);
@@ -34,6 +46,7 @@ class DuesPaymentAllocationService
 
             $allocated = min($remaining, $outstanding);
             $payments[] = DuesPayment::query()->create([
+                'receipt_id' => $receipt->id,
                 'staff_id' => $data['staff_id'],
                 'payment_year' => $cursor->year,
                 'payment_month' => $cursor->month,

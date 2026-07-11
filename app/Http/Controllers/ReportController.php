@@ -20,10 +20,16 @@ class ReportController extends Controller
             ->when($request->filled('department'), fn ($query) => $query->where('department', $request->input('department')))
             ->orderBy('full_name')
             ->get();
+        $expected = $month ? $dues->expectedForMonth($year, $month) : $dues->annualExpected($year);
+        $paidByStaff = DuesPayment::query()
+            ->where('payment_year', $year)
+            ->when($month, fn ($query) => $query->where('payment_month', $month))
+            ->selectRaw('staff_id, SUM(amount) as total_paid')
+            ->groupBy('staff_id')
+            ->pluck('total_paid', 'staff_id');
 
-        $rows = $staffRows->map(function (Staff $staff) use ($dues, $year, $month) {
-            $expected = $month ? $dues->expectedForMonth($year, $month) : $dues->annualExpected($year);
-            $paid = $month ? $dues->totalPaid($staff, $year, $month) : $dues->totalPaid($staff, $year);
+        $rows = $staffRows->map(function (Staff $staff) use ($dues, $expected, $paidByStaff) {
+            $paid = (float) ($paidByStaff[$staff->id] ?? 0);
 
             return [
                 'staff' => $staff,

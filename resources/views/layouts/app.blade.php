@@ -144,16 +144,6 @@
                         </div>
                     @endif
                 @endforeach
-                @if($errors->any())
-                    <div class="alert alert-danger">
-                        <strong>Please check the form.</strong>
-                        <ul class="mb-0">
-                            @foreach($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
                 @yield('content')
             </div>
         </section>
@@ -165,6 +155,9 @@
         </footer>
     @endauth
 </div>
+@if($errors->any() || session('error'))
+<div class="modal fade" id="systemFeedbackModal" tabindex="-1" role="dialog" aria-labelledby="systemFeedbackTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered" role="document"><div class="modal-content error-modal-content"><div class="modal-header"><div class="error-modal-icon"><i class="fas fa-exclamation-triangle"></i></div><div><h5 class="modal-title" id="systemFeedbackTitle">Unable to complete that action</h5><small>Please review the message below and try again.</small></div><button type="button" class="close" data-dismiss="modal"><span>&times;</span></button></div><div class="modal-body">@if(session('error'))<p>{{ session('error') }}</p>@endif @if($errors->any())<ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>@endif</div><div class="modal-footer"><button type="button" class="btn btn-primary" data-dismiss="modal">Okay</button></div></div></div></div>
+@endif
 @auth
 <div id="sessionTimeoutWarning" class="session-timeout-warning" role="alertdialog" aria-live="assertive" aria-labelledby="sessionTimeoutTitle" hidden>
     <div id="sessionCountdownClock" class="session-countdown-clock"><div><strong id="sessionCountdownValue">30</strong><span>seconds</span></div></div>
@@ -172,5 +165,6 @@
 </div>
 @endauth
 @stack('scripts')
+@if($errors->any() || session('error'))<script>document.addEventListener('DOMContentLoaded',()=>$('#systemFeedbackModal').modal('show'));</script>@endif
 </body>
 </html>

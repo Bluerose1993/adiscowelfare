@@ -253,6 +253,9 @@ class WelfareWorkflowTest extends TestCase
         $this->assertDatabaseHas('dues_payments', ['staff_id' => $staff->id, 'payment_year' => 2026, 'payment_month' => 7, 'amount' => 20]);
         $this->assertDatabaseHas('dues_payments', ['staff_id' => $staff->id, 'payment_year' => 2026, 'payment_month' => 8, 'amount' => 10]);
         $this->assertSame(50.0, (float) DuesPayment::query()->where('staff_id', $staff->id)->sum('amount'));
+        $receipt = \App\Models\DuesPaymentReceipt::query()->where('staff_id', $staff->id)->firstOrFail();
+        $this->assertSame(50.0, (float) $receipt->amount);
+        $this->assertSame(3, $receipt->allocations()->count());
     }
 
     public function test_annual_total_is_calculated_from_transactions(): void
@@ -459,6 +462,33 @@ class WelfareWorkflowTest extends TestCase
         $this->assertTrue($payment->fresh()->trashed());
         $this->assertDatabaseCount('dues_payment_deletion_requests', 0);
         $this->assertStringContainsString('[Debug mode]', $payment->fresh()->deleted_reason);
+    }
+
+    public function test_deleting_a_rollover_receipt_removes_every_monthly_allocation(): void
+    {
+        \App\Models\Setting::query()->updateOrCreate(['key' => 'system_mode'], ['value' => 'debug', 'type' => 'string']);
+        $admin = $this->admin();
+        $staff = Staff::query()->create(['staff_id' => 'GROUP01', 'full_name' => 'Grouped Payment', 'is_active' => true]);
+        $allocations = app(\App\Services\DuesPaymentAllocationService::class)->record([
+            'staff_id'=>$staff->id,'payment_year'=>2026,'payment_month'=>1,'amount'=>50,'payment_date'=>'2026-01-10',
+        ], $admin->id);
+        $receiptId = $allocations[0]->receipt_id;
+
+        $this->actingAs($admin)->post(route('admin.dues.deletion-request', $allocations[0]), [
+            'reason'=>'Delete complete demo receipt','password'=>'ChangeMe123!',
+        ])->assertSessionHasNoErrors();
+
+        $this->assertSame(3, DuesPayment::withTrashed()->where('receipt_id',$receiptId)->whereNotNull('deleted_at')->count());
+        $this->assertNotNull(\App\Models\DuesPaymentReceipt::withTrashed()->findOrFail($receiptId)->deleted_at);
+    }
+
+    public function test_debug_mode_can_delete_staff_and_disable_login(): void
+    {
+        \App\Models\Setting::query()->updateOrCreate(['key'=>'system_mode'], ['value'=>'debug','type'=>'string']);
+        $admin=$this->admin(); $staff=$this->createStaffWithUser('DEMO-STF','Demo Staff'); $userId=$staff->user_id;
+        $this->actingAs($admin)->post(route('admin.staff.deletion-request',$staff), ['reason'=>'Demo record','password'=>'ChangeMe123!'])->assertSessionHasNoErrors();
+        $this->assertNotNull(Staff::withTrashed()->findOrFail($staff->id)->deleted_at);
+        $this->assertSame('inactive', User::findOrFail($userId)->status);
     }
 
     public function test_system_mode_switch_requires_admin_password(): void

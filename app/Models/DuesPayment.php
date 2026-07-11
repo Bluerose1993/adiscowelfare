@@ -14,6 +14,7 @@ class DuesPayment extends Model
 
     protected $fillable = [
         'staff_id',
+        'receipt_id',
         'payment_year',
         'payment_month',
         'amount',
@@ -37,9 +38,35 @@ class DuesPayment extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::created(function (DuesPayment $payment) {
+            if ($payment->receipt_id) {
+                return;
+            }
+            $receipt = DuesPaymentReceipt::query()->create([
+                'staff_id' => $payment->staff_id,
+                'amount' => $payment->amount,
+                'starting_year' => $payment->payment_year,
+                'starting_month' => $payment->payment_month,
+                'payment_date' => $payment->payment_date,
+                'payment_method' => $payment->payment_method,
+                'reference_number' => $payment->reference_number,
+                'notes' => $payment->notes,
+                'recorded_by' => $payment->recorded_by,
+            ]);
+            $payment->forceFill(['receipt_id' => $receipt->id])->saveQuietly();
+        });
+    }
+
     public function staff(): BelongsTo
     {
         return $this->belongsTo(Staff::class);
+    }
+
+    public function receipt(): BelongsTo
+    {
+        return $this->belongsTo(DuesPaymentReceipt::class, 'receipt_id');
     }
 
     public function recorder(): BelongsTo

@@ -52,6 +52,9 @@ Route::middleware(['auth', 'role:Administrator', 'admin.module'])->prefix('admin
     Route::delete('staff/{staff}', [StaffController::class, 'destroy'])->name('staff.destroy');
     Route::post('staff/{staff}/create-account', [StaffController::class, 'createAccount'])->name('staff.create-account');
     Route::post('staff/{staff}/reset-password', [StaffController::class, 'resetPassword'])->name('staff.reset-password');
+    Route::post('staff/{staff}/deletion-request', [StaffController::class, 'requestDeletion'])->name('staff.deletion-request');
+    Route::post('staff/deletion-requests/{deletionRequest}/approve', [StaffController::class, 'approveDeletion'])->name('staff.deletion-requests.approve');
+    Route::post('staff/deletion-requests/{deletionRequest}/reject', [StaffController::class, 'rejectDeletion'])->name('staff.deletion-requests.reject');
     Route::post('staff/import', [StaffImportController::class, 'store'])->name('staff.import');
 
     Route::get('dues/record', [DuesPaymentController::class, 'create'])->name('dues.record');

@@ -60,6 +60,11 @@ class Staff extends Model
         return $this->hasMany(BenefitRequest::class);
     }
 
+    public function deletionRequests(): HasMany
+    {
+        return $this->hasMany(StaffDeletionRequest::class);
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);

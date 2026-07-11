@@ -3,9 +3,12 @@
 @section('actions')
 <a href="{{ route('admin.staff.edit', $staff) }}" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i> Edit</a>
 <a href="{{ route('admin.reports.statement', $staff) }}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-print"></i> Statement</a>
+<button class="btn btn-sm btn-outline-danger" data-toggle="collapse" data-target="#staffDeletePanel"><i class="fas fa-trash"></i> Delete Staff</button>
 @endsection
 
 @section('content')
+@php($debugMode = \App\Models\Setting::value('system_mode','production') === 'debug')
+<div class="collapse" id="staffDeletePanel"><div class="card card-danger"><form method="post" action="{{ route('admin.staff.deletion-request',$staff) }}" class="card-body deletion-request-form">@csrf<div><strong>{{ $debugMode ? 'Delete staff immediately' : 'Request staff deletion' }}</strong><small class="d-block text-muted">{{ $debugMode ? 'Debug mode bypasses second-admin approval.' : 'A different admin must approve this request.' }}</small></div><input name="reason" class="form-control" placeholder="Reason" required><input name="password" type="password" class="form-control" placeholder="Your password" required><button class="btn btn-danger">{{ $debugMode ? 'Delete Staff' : 'Submit Request' }}</button></form></div></div>
 <div class="row">
     <div class="col-lg-4">
         <div class="card">

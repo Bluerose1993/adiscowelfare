@@ -8,6 +8,8 @@ use App\Models\Benefit;
 use App\Models\BenefitRequest;
 use App\Models\DuesPayment;
 use App\Models\Staff;
+use App\Models\StaffDeletionRequest;
+use App\Models\Setting;
 use App\Models\User;
 use App\Services\AuditService;
 use App\Services\DuesCalculationService;
@@ -37,7 +39,10 @@ class StaffController extends Controller
             ]);
         }
 
-        return view('admin.staff.index', compact('staff'));
+        return view('admin.staff.index', [
+            'staff' => $staff,
+            'pendingDeletionRequests' => StaffDeletionRequest::query()->where('status', 'pending')->with(['staff', 'requester'])->latest()->get(),
+        ]);
     }
 
     public function create(): View
@@ -159,6 +164,48 @@ class StaffController extends Controller
         $audit->log('staff_deactivated', $staff, $old, $staff->fresh()->toArray());
 
         return redirect()->route('admin.staff.index')->with('success', 'Staff member deactivated.');
+    }
+
+    public function requestDeletion(Request $request, Staff $staff, AuditService $audit): RedirectResponse
+    {
+        $this->authorize('delete', $staff);
+        $validated = $request->validate(['reason' => ['required','string','max:500'], 'password' => ['required','current_password']]);
+        if (Setting::value('system_mode', 'production') === 'debug') {
+            $old = $staff->toArray();
+            $this->deleteStaff($staff);
+            $audit->log('staff_deleted_debug_mode', $staff, $old, ['reason'=>$validated['reason']], $request);
+            return redirect()->route('admin.staff.index')->with('success', 'Staff record deleted immediately in Debug mode.');
+        }
+        if ($staff->deletionRequests()->where('status','pending')->exists()) return back()->withErrors(['reason'=>'A staff deletion request is already pending.']);
+        $deletion = $staff->deletionRequests()->create(['requested_by'=>$request->user()->id,'reason'=>$validated['reason'],'status'=>'pending']);
+        $audit->log('staff_deletion_requested', $staff, [], ['request_id'=>$deletion->id,'reason'=>$validated['reason']], $request);
+        return back()->with('success', 'Staff deletion request submitted for second-admin approval.');
+    }
+
+    public function approveDeletion(Request $request, StaffDeletionRequest $deletionRequest, AuditService $audit): RedirectResponse
+    {
+        abort_unless($deletionRequest->status === 'pending', 422);
+        abort_if($deletionRequest->requested_by === $request->user()->id, 403, 'You cannot approve your own request.');
+        $request->validate(['password'=>['required','current_password']]);
+        $staff = $deletionRequest->staff; abort_if(!$staff || $staff->trashed(),422);
+        $old=$staff->toArray(); $this->deleteStaff($staff);
+        $deletionRequest->update(['status'=>'approved','reviewed_by'=>$request->user()->id,'reviewed_at'=>now()]);
+        $audit->log('staff_deletion_approved',$staff,$old,['request_id'=>$deletionRequest->id],$request);
+        return back()->with('success','Staff deletion approved and completed.');
+    }
+
+    public function rejectDeletion(Request $request, StaffDeletionRequest $deletionRequest, AuditService $audit): RedirectResponse
+    {
+        abort_unless($deletionRequest->status === 'pending',422); abort_if($deletionRequest->requested_by === $request->user()->id,403);
+        $validated=$request->validate(['password'=>['required','current_password'],'review_notes'=>['nullable','string','max:500']]);
+        $deletionRequest->update(['status'=>'rejected','reviewed_by'=>$request->user()->id,'reviewed_at'=>now(),'review_notes'=>$validated['review_notes']??null]);
+        $audit->log('staff_deletion_rejected',$deletionRequest->staff,[],['request_id'=>$deletionRequest->id],$request);
+        return back()->with('success','Staff deletion request rejected.');
+    }
+
+    private function deleteStaff(Staff $staff): void
+    {
+        DB::transaction(function () use ($staff) { if ($staff->user) $staff->user->update(['status'=>'inactive']); $staff->update(['is_active'=>false]); $staff->delete(); });
     }
 
     private function createLoginAccount(Staff $staff, string $password): User

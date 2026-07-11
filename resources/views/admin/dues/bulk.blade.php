@@ -3,8 +3,8 @@
 @section('content')
 <form method="get" class="card card-body mb-3">
     <div class="form-row align-items-end">
-        <div class="col-md-3"><label>Year</label><input name="payment_year" type="number" class="form-control" value="{{ $year }}"></div>
-        <div class="col-md-3"><label>Month</label><select name="payment_month" class="form-control">@foreach($months as $number => $name)<option value="{{ $number }}" @selected($month == $number)>{{ $name }}</option>@endforeach</select></div>
+        <div class="col-md-3"><label>Start Allocation Year</label><input name="payment_year" type="number" min="2000" max="2100" class="form-control" value="{{ $year }}" required></div>
+        <div class="col-md-3"><label>Start Allocation Month</label><select name="payment_month" class="form-control" required>@foreach($months as $number => $name)<option value="{{ $number }}" @selected($month == $number)>{{ $name }}</option>@endforeach</select><small class="text-muted">Excess amounts continue from this month.</small></div>
         <div class="col-md-3"><button class="btn btn-outline-primary"><i class="fas fa-sync"></i> Load</button></div>
     </div>
 </form>

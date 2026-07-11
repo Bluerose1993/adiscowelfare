@@ -5,6 +5,7 @@
 @endsection
 
 @section('content')
+@if($pendingDeletionRequests->isNotEmpty())<div class="card card-warning"><div class="card-header"><h3 class="card-title">Staff Deletions Awaiting Approval</h3></div><div class="card-body">@foreach($pendingDeletionRequests as $deletion)<div class="approval-request"><div><strong>{{ $deletion->staff?->full_name }}</strong><br><small>{{ $deletion->requester?->name }}: {{ $deletion->reason }}</small></div>@if($deletion->requested_by===auth()->id())<span class="badge badge-secondary">Waiting for another admin</span>@else<div class="approval-actions"><form method="post" action="{{ route('admin.staff.deletion-requests.approve',$deletion) }}">@csrf<div class="input-group"><input name="password" type="password" class="form-control" placeholder="Your password" required><div class="input-group-append"><button class="btn btn-danger">Approve</button></div></div></form><form method="post" action="{{ route('admin.staff.deletion-requests.reject',$deletion) }}">@csrf<div class="input-group"><input name="password" type="password" class="form-control" placeholder="Your password" required><div class="input-group-append"><button class="btn btn-outline-secondary">Reject</button></div></div></form></div>@endif</div>@endforeach</div></div>@endif
 <div class="card">
     <div class="card-header">
         <form method="get" id="staffSearchForm" class="form-inline">
