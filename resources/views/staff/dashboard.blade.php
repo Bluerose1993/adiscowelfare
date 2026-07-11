@@ -21,7 +21,7 @@
 <div class="card"><div class="card-header"><h3 class="card-title">{{ $year }} Dues Status</h3></div><div class="card-body"><div class="month-grid">
     @foreach($matrix as $row)
         @php($paid = in_array($row['status'], ['paid', 'overpaid'], true))
-        <div class="month-tile month-state-{{ $paid ? 'paid' : 'unpaid' }}"><span class="month-check"><i class="fas fa-{{ $paid ? 'check' : 'exclamation' }}"></i></span><strong>{{ $row['month'] }}</strong><div>{{ number_format($row['paid'], 2) }} / {{ number_format($row['expected'], 2) }}</div><span class="month-status">{{ str_replace('_', ' ', $row['status']) }}</span></div>
+        <div class="month-tile month-state-{{ $paid ? 'paid' : 'unpaid' }}"><span class="month-check"><i class="fas fa-{{ $paid ? 'check' : 'exclamation' }}"></i></span><strong>{{ substr($row['month'], 0, 3) }}. {{ substr((string) $year, -2) }}</strong><div>{{ number_format($row['paid'], 2) }} / {{ number_format($row['expected'], 2) }}</div><span class="month-status">{{ str_replace('_', ' ', $row['status']) }}</span></div>
     @endforeach
 </div></div></div>
 @endsection

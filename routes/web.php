@@ -52,6 +52,7 @@ Route::middleware(['auth', 'role:Administrator', 'admin.module'])->prefix('admin
     Route::delete('staff/{staff}', [StaffController::class, 'destroy'])->name('staff.destroy');
     Route::post('staff/{staff}/create-account', [StaffController::class, 'createAccount'])->name('staff.create-account');
     Route::post('staff/{staff}/reset-password', [StaffController::class, 'resetPassword'])->name('staff.reset-password');
+    Route::post('staff/{staff}/make-administrator', [StaffController::class, 'makeAdministrator'])->name('staff.make-administrator');
     Route::post('staff/{staff}/deletion-request', [StaffController::class, 'requestDeletion'])->name('staff.deletion-request');
     Route::post('staff/deletion-requests/{deletionRequest}/approve', [StaffController::class, 'approveDeletion'])->name('staff.deletion-requests.approve');
     Route::post('staff/deletion-requests/{deletionRequest}/reject', [StaffController::class, 'rejectDeletion'])->name('staff.deletion-requests.reject');
@@ -73,6 +74,9 @@ Route::middleware(['auth', 'role:Administrator', 'admin.module'])->prefix('admin
         ->parameters(['benefit-types' => 'benefitType']);
     Route::resource('benefits', BenefitController::class)->except(['show', 'destroy']);
     Route::post('benefits/{benefit}/mark-paid', [BenefitController::class, 'markPaid'])->name('benefits.mark-paid');
+    Route::post('benefits/{benefit}/deletion-request', [BenefitController::class, 'requestDeletion'])->name('benefits.deletion-request');
+    Route::post('benefits/deletion-requests/{deletionRequest}/approve', [BenefitController::class, 'approveDeletion'])->name('benefits.deletion-requests.approve');
+    Route::post('benefits/deletion-requests/{deletionRequest}/reject', [BenefitController::class, 'rejectDeletion'])->name('benefits.deletion-requests.reject');
 
     Route::get('benefit-requests', [BenefitRequestController::class, 'adminIndex'])->name('benefit-requests.index');
     Route::get('benefit-requests/{benefitRequest}', [BenefitRequestController::class, 'adminShow'])->name('benefit-requests.show');

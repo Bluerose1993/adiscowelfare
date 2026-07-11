@@ -30,6 +30,14 @@
                         @csrf
                         <div class="input-group"><input name="temporary_password" class="form-control" value="ChangeMe123!" required><div class="input-group-append"><button class="btn btn-warning">Reset</button></div></div>
                     </form>
+                    @can('manage administrators')
+                    <hr><button class="btn btn-outline-primary btn-block" data-toggle="collapse" data-target="#promoteAdminPanel" type="button"><i class="fas fa-user-shield"></i> Make Staff an Admin</button>
+                    <div class="collapse mt-3" id="promoteAdminPanel"><form method="post" action="{{ route('admin.staff.make-administrator', $staff) }}">@csrf
+                        <p class="small text-muted">Select the system options this staff administrator can access.</p>
+                        @foreach($adminPermissions as $permission)<div class="custom-control custom-checkbox"><input class="custom-control-input" type="checkbox" name="permissions[]" value="{{ $permission->name }}" id="staffPermission{{ $permission->id }}" @checked($staff->user->can($permission->name))><label class="custom-control-label" for="staffPermission{{ $permission->id }}">{{ ucwords($permission->name) }}</label></div>@endforeach
+                        <button class="btn btn-primary btn-block mt-3">Save Admin Permissions</button>
+                    </form></div>
+                    @endcan
                 @else
                     <form method="post" action="{{ route('admin.staff.create-account', $staff) }}">
                         @csrf

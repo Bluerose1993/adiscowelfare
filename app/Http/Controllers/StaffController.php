@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
+use Spatie\Permission\Models\Permission;
 
 class StaffController extends Controller
 {
@@ -99,6 +100,7 @@ class StaffController extends Controller
                 'pending_benefits' => (float) $staff->benefits()->whereIn('status', [Benefit::STATUS_PENDING, Benefit::STATUS_APPROVED])->sum('amount'),
                 'pending_requests' => $staff->benefitRequests()->whereIn('status', [BenefitRequest::STATUS_SUBMITTED, BenefitRequest::STATUS_UNDER_REVIEW])->count(),
             ],
+            'adminPermissions' => Permission::query()->where('guard_name', 'web')->whereNotIn('name', ['submit benefit requests', 'view own records'])->orderBy('name')->get(),
         ]);
     }
 
@@ -154,6 +156,18 @@ class StaffController extends Controller
         return back()->with('success', 'Staff password reset.');
     }
 
+    public function makeAdministrator(Request $request, Staff $staff, AuditService $audit): RedirectResponse
+    {
+        $this->authorize('update', $staff);
+        abort_unless($request->user()->can('manage administrators'), 403);
+        $validated = $request->validate(['permissions' => ['required', 'array', 'min:1'], 'permissions.*' => ['string', 'exists:permissions,name']]);
+        abort_if(! $staff->user, 422, 'Create a login account for this staff member first.');
+        $staff->user->assignRole('Administrator');
+        $staff->user->syncPermissions($validated['permissions']);
+        $audit->log('staff_promoted_to_administrator', $staff, [], ['permissions' => $validated['permissions']], $request);
+        return back()->with('success', 'Staff member is now an administrator with the selected permissions.');
+    }
+
     public function destroy(Request $request, Staff $staff, AuditService $audit): RedirectResponse
     {
         $this->authorize('delete', $staff);
@@ -205,7 +219,7 @@ class StaffController extends Controller
 
     private function deleteStaff(Staff $staff): void
     {
-        DB::transaction(function () use ($staff) { if ($staff->user) $staff->user->update(['status'=>'inactive']); $staff->update(['is_active'=>false]); $staff->delete(); });
+        DB::transaction(function () use ($staff) { if ($staff->user) { $staff->user->syncPermissions([]); $staff->user->syncRoles([]); $staff->user->update(['status'=>'inactive']); } $staff->update(['is_active'=>false]); $staff->delete(); });
     }
 
     private function createLoginAccount(Staff $staff, string $password): User

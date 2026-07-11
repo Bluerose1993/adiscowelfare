@@ -251,6 +251,10 @@ label { color: #3d485a; font-size: .84rem; font-weight: 700; }
 .session-timeout-warning > div:last-child { padding: 1.3rem; border: 1px solid #fca5a5; border-radius: 18px; background: #fff; box-shadow: 0 24px 80px rgba(0,0,0,.3); }
 .session-timeout-warning[hidden] { display: none; }
 .session-timeout-warning p { margin: .2rem 0 0; font-size: .85rem; color: #9a3412; }
+.popup-success .error-modal-icon { color: #15803d; background: #dcfce7; }
+.popup-success .modal-header { border-top: 5px solid #22c55e; }
+.popup-info .error-modal-icon { color: #0369a1; background: #e0f2fe; }
+.popup-info .modal-header { border-top: 5px solid #38bdf8; }
 .session-countdown-clock { --countdown-progress: 360deg; display: grid; place-items: center; width: 130px; height: 130px; border-radius: 50%; background: conic-gradient(#dc2626 var(--countdown-progress),#fecaca 0); box-shadow: 0 20px 60px rgba(220,38,38,.35); }
 .session-countdown-clock::before { content: ''; grid-area: 1/1; width: 108px; height: 108px; border-radius: 50%; background: #fff; }
 .session-countdown-clock > div { grid-area: 1/1; z-index: 1; display: flex; flex-direction: column; align-items: center; line-height: 1; }

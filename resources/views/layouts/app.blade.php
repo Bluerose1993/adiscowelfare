@@ -136,14 +136,6 @@
 
         <section class="{{ auth()->check() ? 'content' : '' }}">
             <div class="{{ auth()->check() ? 'container-fluid' : '' }}">
-                @foreach (['success' => 'success', 'status' => 'info', 'info' => 'info', 'error' => 'danger'] as $key => $class)
-                    @if(session($key))
-                        <div class="alert alert-{{ $class }} alert-dismissible fade show">
-                            {{ session($key) }}
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                        </div>
-                    @endif
-                @endforeach
                 @yield('content')
             </div>
         </section>
@@ -155,8 +147,9 @@
         </footer>
     @endauth
 </div>
-@if($errors->any() || session('error'))
-<div class="modal fade" id="systemFeedbackModal" tabindex="-1" role="dialog" aria-labelledby="systemFeedbackTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered" role="document"><div class="modal-content error-modal-content"><div class="modal-header"><div class="error-modal-icon"><i class="fas fa-exclamation-triangle"></i></div><div><h5 class="modal-title" id="systemFeedbackTitle">Unable to complete that action</h5><small>Please review the message below and try again.</small></div><button type="button" class="close" data-dismiss="modal"><span>&times;</span></button></div><div class="modal-body">@if(session('error'))<p>{{ session('error') }}</p>@endif @if($errors->any())<ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>@endif</div><div class="modal-footer"><button type="button" class="btn btn-primary" data-dismiss="modal">Okay</button></div></div></div></div>
+@php($popupType = $errors->any() || session('error') ? 'error' : (session('success') ? 'success' : (session('status') || session('info') ? 'info' : null)))
+@if($popupType)
+<div class="modal fade" id="systemFeedbackModal" tabindex="-1" role="dialog" aria-labelledby="systemFeedbackTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered" role="document"><div class="modal-content error-modal-content popup-{{ $popupType }}"><div class="modal-header"><div class="error-modal-icon"><i class="fas fa-{{ $popupType === 'success' ? 'check-circle' : ($popupType === 'info' ? 'info-circle' : 'exclamation-triangle') }}"></i></div><div><h5 class="modal-title" id="systemFeedbackTitle">{{ $popupType === 'success' ? 'Action completed' : ($popupType === 'info' ? 'System notification' : 'Unable to complete that action') }}</h5><small>{{ $popupType === 'error' ? 'Please review the message below and try again.' : 'Welfare portal notification' }}</small></div><button type="button" class="close" data-dismiss="modal"><span>&times;</span></button></div><div class="modal-body">@foreach(['success','status','info','error'] as $key)@if(session($key))<p class="mb-1">{{ session($key) }}</p>@endif @endforeach @if($errors->any())<ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>@endif</div><div class="modal-footer"><button type="button" class="btn btn-primary" data-dismiss="modal">Okay</button></div></div></div></div>
 @endif
 @auth
 <div id="sessionTimeoutWarning" class="session-timeout-warning" role="alertdialog" aria-live="assertive" aria-labelledby="sessionTimeoutTitle" hidden>
@@ -165,6 +158,6 @@
 </div>
 @endauth
 @stack('scripts')
-@if($errors->any() || session('error'))<script>document.addEventListener('DOMContentLoaded',()=>$('#systemFeedbackModal').modal('show'));</script>@endif
+@if($popupType)<script>document.addEventListener('DOMContentLoaded',()=>$('#systemFeedbackModal').modal('show'));</script>@endif
 </body>
 </html>

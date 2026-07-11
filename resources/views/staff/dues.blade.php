@@ -3,7 +3,7 @@
 @section('content')
 <div class="card"><div class="card-body table-responsive">
     <table class="table table-bordered"><thead><tr><th>Month</th><th>Expected</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead><tbody>
-    @foreach($matrix as $row)<tr class="dues-row-{{ in_array($row['status'], ['paid','overpaid'], true) ? 'paid' : 'unpaid' }}"><td>{{ $row['month'] }}</td><td>{{ number_format($row['expected'], 2) }}</td><td>{{ number_format($row['paid'], 2) }}</td><td>{{ number_format($row['balance'], 2) }}</td><td><strong>{{ str_replace('_', ' ', $row['status']) }}</strong></td></tr>@endforeach
+    @foreach($matrix as $row)<tr class="dues-row-{{ in_array($row['status'], ['paid','overpaid'], true) ? 'paid' : 'unpaid' }}"><td>{{ substr($row['month'], 0, 3) }}. {{ substr((string) $year, -2) }}</td><td>{{ number_format($row['expected'], 2) }}</td><td>{{ number_format($row['paid'], 2) }}</td><td>{{ number_format($row['balance'], 2) }}</td><td><strong>{{ str_replace('_', ' ', $row['status']) }}</strong></td></tr>@endforeach
     </tbody></table>
 </div></div>
 <div class="card"><div class="card-header"><h3 class="card-title">Payment Details</h3></div><div class="card-body table-responsive">
