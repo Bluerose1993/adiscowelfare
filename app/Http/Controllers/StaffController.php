@@ -79,10 +79,15 @@ class StaffController extends Controller
     {
         $this->authorize('view', $staff);
         $year = (int) request('year', now()->year);
+        $duesYear = (int) (DuesPayment::query()->min('payment_year') ?: now()->year);
+        $benefitYear = (int) (Benefit::query()->selectRaw('MIN(YEAR(COALESCE(payment_date, created_at))) as first_year')->value('first_year') ?: now()->year);
+        $firstYear = min($duesYear, $benefitYear, $year, (int) now()->year);
+        $lastYear = max($year, (int) now()->year);
 
         return view('admin.staff.show', [
             'staff' => $staff->load('user'),
             'year' => $year,
+            'availableYears' => collect(range($firstYear, $lastYear))->sortDesc()->values(),
             'matrix' => $dues->monthlyBreakdown($staff, $year),
             'payments' => DuesPayment::query()->with('recorder')->where('staff_id', $staff->id)->latest('payment_date')->paginate(20),
             'benefits' => Benefit::query()->with('benefitType')->where('staff_id', $staff->id)->latest()->get(),

@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Benefit;
 use App\Models\BenefitRequest;
+use App\Models\DuesPayment;
 use App\Services\DuesCalculationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use App\Services\AuditService;
@@ -23,9 +25,7 @@ class StaffPortalController extends Controller
         $year = (int) ($validated['year'] ?? now()->year);
         $paidYear = $dues->totalPaid($staff, $year);
         $expectedYear = $dues->annualExpected($year);
-        $availableYears = $staff->duesPayments()->select('payment_year')->distinct()->pluck('payment_year')
-            ->merge($staff->benefits()->selectRaw('YEAR(COALESCE(payment_date, created_at)) as benefit_year')->distinct()->pluck('benefit_year'))
-            ->push(now()->year)->push($year)->filter()->unique()->sortDesc()->values();
+        $availableYears = $this->availableYears($year);
 
         return view('staff.dashboard', [
             'staff' => $staff,
@@ -41,6 +41,16 @@ class StaffPortalController extends Controller
                 'pending_benefits' => (float) $staff->benefits()->whereIn('status', [Benefit::STATUS_PENDING, Benefit::STATUS_APPROVED])->whereYear('created_at', $year)->sum('amount'),
             ],
         ]);
+    }
+
+    private function availableYears(int $selectedYear)
+    {
+        $duesYear = (int) (DuesPayment::query()->min('payment_year') ?: now()->year);
+        $benefitYear = (int) (Benefit::query()->selectRaw('MIN(YEAR(COALESCE(payment_date, created_at))) as first_year')->value('first_year') ?: now()->year);
+        $firstYear = min($duesYear, $benefitYear, $selectedYear, (int) now()->year);
+        $lastYear = max($selectedYear, (int) now()->year);
+
+        return collect(range($firstYear, $lastYear))->sortDesc()->values();
     }
 
     public function dues(Request $request, DuesCalculationService $dues): View
@@ -110,10 +120,20 @@ class StaffPortalController extends Controller
             'password' => ['required', 'confirmed', 'min:8'],
         ]);
 
+        $isInitialPasswordChange = (bool) $request->user()->must_change_password;
+
         $request->user()->forceFill([
             'password' => Hash::make($validated['password']),
             'must_change_password' => false,
         ])->save();
+
+        if ($isInitialPasswordChange) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->with('success', 'Password changed successfully. Please sign in with your new password.');
+        }
 
         return back()->with('success', 'Password changed.');
     }

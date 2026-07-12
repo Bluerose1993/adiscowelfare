@@ -63,6 +63,22 @@ class WelfareWorkflowTest extends TestCase
         $this->actingAs($administrator)->get(route('admin.administrators.index'))->assertForbidden();
     }
 
+    public function test_ajax_staff_search_cannot_be_cached_as_a_full_page(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin)->getJson(route('admin.staff.index', ['search' => 'Peter']))
+            ->assertOk()
+            ->assertHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+            ->assertHeader('Vary', 'Accept, X-Requested-With')
+            ->assertJsonStructure(['html', 'count']);
+
+        $this->actingAs($admin)->get(route('admin.staff.index', ['search' => 'Peter']))
+            ->assertOk()
+            ->assertViewIs('admin.staff.index')
+            ->assertHeader('Content-Type', 'text/html; charset=UTF-8');
+    }
+
     public function test_authorized_admin_can_create_an_admin_with_selected_options(): void
     {
         $admin = $this->admin();
@@ -81,6 +97,20 @@ class WelfareWorkflowTest extends TestCase
         $this->assertTrue($created->hasRole('Administrator'));
         $this->assertTrue($created->hasDirectPermission('view reports'));
         $this->assertFalse($created->can('manage staff'));
+    }
+
+    public function test_administrator_can_update_own_profile(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin)->get(route('admin.profile.edit'))->assertOk()->assertSee('My Profile');
+        $this->actingAs($admin)->put(route('admin.profile.update'), [
+            'full_name' => 'Updated Administrator',
+            'email' => 'updated-admin@example.test',
+        ])->assertSessionHasNoErrors()->assertSessionHas('success');
+
+        $this->assertSame('Updated Administrator', $admin->fresh()->name);
+        $this->assertSame('updated-admin@example.test', $admin->fresh()->email);
     }
 
     public function test_staff_can_log_in(): void
@@ -646,6 +676,22 @@ class WelfareWorkflowTest extends TestCase
         $this->actingAs($staff->user)
             ->get(route('staff.password.edit'))
             ->assertOk();
+    }
+
+    public function test_initial_password_change_logs_staff_out_and_requires_new_password(): void
+    {
+        $staff = $this->createStaffWithUser();
+        $staff->user->update(['must_change_password' => true]);
+
+        $this->actingAs($staff->user)->post(route('staff.password.update'), [
+            'current_password' => 'password',
+            'password' => 'NewSecurePassword123!',
+            'password_confirmation' => 'NewSecurePassword123!',
+        ])->assertRedirect(route('login'))->assertSessionHas('success');
+
+        $this->assertGuest();
+        $this->assertFalse($staff->user->fresh()->must_change_password);
+        $this->assertTrue(Hash::check('NewSecurePassword123!', $staff->user->fresh()->password));
     }
 
     public function test_staff_import_skips_duplicate_staff_ids_instead_of_merging_people(): void

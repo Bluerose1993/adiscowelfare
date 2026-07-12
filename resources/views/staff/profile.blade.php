@@ -1,7 +1,7 @@
 @extends('layouts.app', ['title' => 'My Profile'])
 
 @section('content')
-<form method="post" action="{{ route('staff.profile.update') }}" data-prevent-double-submit="true">@csrf @method('PUT')
+<form method="post" action="{{ $profileUpdateRoute ?? route('staff.profile.update') }}" data-prevent-double-submit="true">@csrf @method('PUT')
 <div class="card"><div class="card-header"><h3 class="card-title">Personal &amp; Employment Information</h3></div><div class="card-body"><div class="row">
     <div class="col-md-6 form-group"><label class="required">Full Name</label><input name="full_name" class="form-control" value="{{ old('full_name', $staff->full_name) }}" required></div>
     <div class="col-md-3 form-group"><label>Staff ID</label><input class="form-control profile-locked" value="{{ $staff->staff_id ?: 'Unverified' }}" readonly><small class="text-muted"><i class="fas fa-lock"></i> Only an administrator can change Staff ID.</small></div>

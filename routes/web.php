@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\AdminProfileController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\BenefitController;
 use App\Http\Controllers\BenefitRequestController;
@@ -44,6 +45,8 @@ Route::post('/session/keep-alive', fn () => response()->json(['active' => true, 
 
 Route::middleware(['auth', 'role:Administrator', 'admin.module'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/profile', [AdminProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [AdminProfileController::class, 'update'])->name('profile.update');
     Route::resource('administrators', AdminUserController::class)->except(['show', 'destroy']);
     Route::post('administrators/{administrator}/reset-password', [AdminUserController::class, 'resetPassword'])->name('administrators.reset-password');
     Route::post('administrators/{administrator}/toggle-status', [AdminUserController::class, 'toggleStatus'])->name('administrators.toggle-status');

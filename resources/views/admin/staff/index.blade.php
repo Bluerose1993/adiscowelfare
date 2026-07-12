@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let timer;
     let controller;
 
-    async function loadResults(url, updateHistory = true) {
+    async function loadResults(url) {
         if (controller) controller.abort();
         controller = new AbortController();
         spinner.classList.remove('d-none');
@@ -37,7 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Search failed');
             const data = await response.json();
             results.innerHTML = data.html;
-            if (updateHistory) history.replaceState({}, '', url);
         } catch (error) {
             if (error.name !== 'AbortError') results.innerHTML = '<div class="alert alert-danger">The staff search could not be completed. Please try again.</div>';
         } finally {

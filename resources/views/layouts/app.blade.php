@@ -50,7 +50,7 @@
             </ul>
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
-                    <span class="nav-link user-chip"><span class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span><span class="user-name">{{ auth()->user()->name }}</span></span>
+                    <a class="nav-link user-chip" href="{{ auth()->user()->hasRole('Administrator') ? route('admin.profile.edit') : route('staff.profile') }}"><span class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span><span class="user-name">{{ auth()->user()->name }}</span></a>
                 </li>
                 <li class="nav-item">
                     <form action="{{ route('logout') }}" method="post">
@@ -100,6 +100,7 @@
                             <li class="nav-item"><a class="nav-link" href="{{ route('admin.reports.benefits') }}"><i class="nav-icon fas fa-chart-pie"></i><p>Benefits Report</p></a></li>
                             @endcan
                             <li class="nav-header">SYSTEM</li>
+                            <li class="nav-item"><a class="nav-link" href="{{ route('admin.profile.edit') }}"><i class="nav-icon fas fa-user-circle"></i><p>My Profile</p></a></li>
                             @can('manage administrators')<li class="nav-item"><a class="nav-link" href="{{ route('admin.administrators.index') }}"><i class="nav-icon fas fa-user-shield"></i><p>Administrators</p></a></li>@endcan
                             @can('manage settings')
                             <li class="nav-item"><a class="nav-link" href="{{ route('admin.settings.index') }}"><i class="nav-icon fas fa-cogs"></i><p>Settings</p></a></li>

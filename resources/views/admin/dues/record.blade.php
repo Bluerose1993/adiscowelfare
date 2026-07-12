@@ -8,7 +8,7 @@
             <div class="card-body">
                 <div class="form-group position-relative">
                     <label class="required">Search by name, Staff ID, or phone</label>
-                    <input id="staffSearch" class="form-control form-control-lg" autocomplete="off" placeholder="Start typing...">
+                    <input id="staffSearch" class="form-control form-control-lg" autocomplete="off" placeholder="Start typing..." value="{{ old('staff_search', $selectedStaff?->full_name) }}">
                     <div id="staffSearchResults" class="staff-search-results d-none"></div>
                 </div>
                 <div id="staffSummary" class="text-muted">Select a staff member to see dues and benefit status.</div>
@@ -18,7 +18,7 @@
     <div class="col-lg-7">
         <form method="post" action="{{ route('admin.dues.store') }}" data-prevent-double-submit="true">
             @csrf
-            <input type="hidden" id="selectedStaffId" name="staff_id" value="{{ old('staff_id', session('selected_staff_id')) }}">
+            <input type="hidden" id="selectedStaffId" name="staff_id" value="{{ old('staff_id', $selectedStaff?->id ?? session('selected_staff_id')) }}">
             <div class="card">
                 <div class="card-header"><h3 class="card-title">Payment Details</h3></div>
                 <div class="card-body">

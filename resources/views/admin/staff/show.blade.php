@@ -59,7 +59,7 @@
             @endforeach
         </div>
         <div class="card">
-            <div class="card-header"><h3 class="card-title">{{ $year }} Annual Dues Matrix</h3></div>
+            <div class="card-header d-flex flex-wrap align-items-center justify-content-between"><h3 class="card-title mb-2 mb-sm-0">{{ $year }} Annual Dues Matrix</h3><div class="d-flex flex-wrap align-items-center"><form method="get" class="d-inline-flex align-items-center mr-2"><label for="staffMatrixYear" class="mr-2 mb-0">Year</label><select id="staffMatrixYear" name="year" class="form-control form-control-sm" onchange="this.form.submit()">@foreach($availableYears as $availableYear)<option value="{{ $availableYear }}" @selected($year === $availableYear)>{{ $availableYear }}</option>@endforeach</select></form><a href="{{ route('admin.dues.record', ['staff_id' => $staff->id, 'year' => $year]) }}" class="btn btn-sm btn-success"><i class="fas fa-cash-register"></i> Record Payment</a></div></div>
             <div class="card-body table-responsive">
                 <table class="table table-bordered">
                     <thead><tr><th>Month</th><th>Expected</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>

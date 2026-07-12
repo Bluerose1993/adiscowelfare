@@ -30,13 +30,14 @@ class DuesPaymentController extends Controller
         ]);
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
         $this->authorize('create', DuesPayment::class);
 
         return view('admin.dues.record', [
             'months' => DuesCalculationService::MONTHS,
-            'year' => now()->year,
+            'year' => (int) $request->integer('year', now()->year),
+            'selectedStaff' => $request->filled('staff_id') ? Staff::query()->find($request->integer('staff_id')) : null,
         ]);
     }
 
