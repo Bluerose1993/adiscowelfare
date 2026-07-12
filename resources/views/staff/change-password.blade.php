@@ -4,7 +4,7 @@
 @if(auth()->user()->must_change_password)
     <div class="alert alert-warning"><strong>Password change required.</strong> Your current password is the phone number supplied by the administrator. Choose a private password before continuing.</div>
 @endif
-<form method="post" action="{{ route('staff.password.update') }}" data-prevent-double-submit="true">
+<form method="post" action="{{ $passwordUpdateRoute ?? route('staff.password.update') }}" data-prevent-double-submit="true">
     @csrf
     <div class="card">
         <div class="card-body">

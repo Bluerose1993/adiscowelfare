@@ -47,6 +47,8 @@ Route::middleware(['auth', 'role:Administrator', 'admin.module'])->prefix('admin
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/profile', [AdminProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [AdminProfileController::class, 'update'])->name('profile.update');
+    Route::get('/change-password', [AdminProfileController::class, 'editPassword'])->name('password.edit');
+    Route::post('/change-password', [AdminProfileController::class, 'updatePassword'])->name('password.update');
     Route::resource('administrators', AdminUserController::class)->except(['show', 'destroy']);
     Route::post('administrators/{administrator}/reset-password', [AdminUserController::class, 'resetPassword'])->name('administrators.reset-password');
     Route::post('administrators/{administrator}/toggle-status', [AdminUserController::class, 'toggleStatus'])->name('administrators.toggle-status');

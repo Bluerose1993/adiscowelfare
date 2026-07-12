@@ -101,6 +101,7 @@
                             @endcan
                             <li class="nav-header">SYSTEM</li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('admin.profile.edit') }}"><i class="nav-icon fas fa-user-circle"></i><p>My Profile</p></a></li>
+                            <li class="nav-item"><a class="nav-link" href="{{ route('admin.password.edit') }}"><i class="nav-icon fas fa-key"></i><p>Change Password</p></a></li>
                             @can('manage administrators')<li class="nav-item"><a class="nav-link" href="{{ route('admin.administrators.index') }}"><i class="nav-icon fas fa-user-shield"></i><p>Administrators</p></a></li>@endcan
                             @can('manage settings')
                             <li class="nav-item"><a class="nav-link" href="{{ route('admin.settings.index') }}"><i class="nav-icon fas fa-cogs"></i><p>Settings</p></a></li>

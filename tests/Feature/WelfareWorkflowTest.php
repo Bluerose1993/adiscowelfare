@@ -113,6 +113,20 @@ class WelfareWorkflowTest extends TestCase
         $this->assertSame('updated-admin@example.test', $admin->fresh()->email);
     }
 
+    public function test_administrator_can_change_own_password(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin)->post(route('admin.password.update'), [
+            'current_password' => 'ChangeMe123!',
+            'password' => 'NewAdminPassword123!',
+            'password_confirmation' => 'NewAdminPassword123!',
+        ])->assertSessionHasNoErrors()->assertSessionHas('success');
+
+        $this->assertTrue(Hash::check('NewAdminPassword123!', $admin->fresh()->password));
+        $this->assertFalse($admin->fresh()->must_change_password);
+    }
+
     public function test_staff_can_log_in(): void
     {
         $staff = $this->createStaffWithUser();

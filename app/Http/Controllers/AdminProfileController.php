@@ -6,6 +6,7 @@ use App\Services\AuditService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -49,5 +50,25 @@ class AdminProfileController extends Controller
         });
 
         return back()->with('success', 'Your profile has been updated.');
+    }
+
+    public function editPassword(): View
+    {
+        return view('staff.change-password', ['passwordUpdateRoute' => route('admin.password.update')]);
+    }
+
+    public function updatePassword(Request $request, AuditService $audit): RedirectResponse
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+        $request->user()->forceFill([
+            'password' => Hash::make($validated['password']),
+            'must_change_password' => false,
+        ])->save();
+        $audit->log('administrator_password_changed', $request->user(), [], [], $request);
+
+        return back()->with('success', 'Your password has been changed successfully.');
     }
 }
