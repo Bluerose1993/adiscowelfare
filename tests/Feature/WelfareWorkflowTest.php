@@ -389,13 +389,18 @@ class WelfareWorkflowTest extends TestCase
         for ($i = 0; $i < 2; $i++) {
             $this->actingAs($admin)->post(route('admin.benefit-requests.review', $request), [
                 'status' => BenefitRequest::STATUS_APPROVED,
-                'approved_amount' => 500,
+                'approved_amount' => 450,
                 'review_notes' => 'Approved',
             ])->assertRedirect();
         }
 
         $this->assertSame(1, Benefit::query()->where('staff_id', $staff->id)->count());
         $this->assertNotNull($request->fresh()->resulting_benefit_id);
+        $this->assertSame(Benefit::STATUS_APPROVED, Benefit::query()->where('staff_id', $staff->id)->firstOrFail()->status);
+        $this->assertSame(450.0, (float) $request->fresh()->approved_amount);
+        $this->assertSame(450.0, (float) Benefit::query()->where('staff_id', $staff->id)->firstOrFail()->amount);
+        $this->actingAs($admin)->get(route('admin.benefit-requests.index'))->assertDontSee('Bereavement support');
+        $this->actingAs($admin)->get(route('admin.benefits.index'))->assertSee('Bereavement support');
     }
 
     public function test_export_totals_match_database_totals(): void

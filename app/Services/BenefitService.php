@@ -25,7 +25,7 @@ class BenefitService
                 'amount' => $amount,
                 'incident_date' => $request->incident_date,
                 'approved_date' => now()->toDateString(),
-                'status' => Benefit::STATUS_PENDING,
+                'status' => Benefit::STATUS_APPROVED,
                 'created_by' => $userId,
                 'approved_by' => $userId,
                 'notes' => $notes,
@@ -33,6 +33,7 @@ class BenefitService
 
             $request->update([
                 'status' => BenefitRequest::STATUS_APPROVED,
+                'approved_amount' => $amount,
                 'reviewed_by' => $userId,
                 'reviewed_at' => now(),
                 'review_notes' => $notes,

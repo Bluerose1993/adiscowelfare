@@ -23,14 +23,17 @@ class BenefitRequestController extends Controller
     public function adminIndex(Request $request): View
     {
         $query = BenefitRequest::query()->with(['staff', 'benefitType', 'resultingBenefit'])->latest();
+        $status = $request->input('status', 'pending');
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
+        if ($status === 'pending') {
+            $query->whereIn('status', [BenefitRequest::STATUS_SUBMITTED, BenefitRequest::STATUS_UNDER_REVIEW]);
+        } elseif ($status !== 'all') {
+            $query->where('status', $status);
         }
 
         return view('admin.benefit-requests.index', [
             'requests' => $query->paginate(50)->withQueryString(),
-            'status' => $request->input('status'),
+            'status' => $status,
             'pendingDeletionRequests' => BenefitRequestDeletionRequest::query()->where('status', 'pending')->with(['benefitRequest.staff', 'requester'])->latest()->get(),
         ]);
     }
@@ -105,11 +108,12 @@ class BenefitRequestController extends Controller
             $audit->log('benefit_request_approved', $benefitRequest, $old, $benefitRequest->fresh()->toArray());
             $audit->log('benefit_created_from_request', $benefit, [], $benefit->toArray());
 
-            return redirect()->route('admin.benefit-requests.show', $benefitRequest)->with('success', 'Request approved and pending benefit created.');
+            return redirect()->route('admin.benefits.index')->with('success', 'Benefit request approved and moved to All Benefits.');
         }
 
         $benefitRequest->update([
             'status' => $request->input('status'),
+            'approved_amount' => $request->filled('approved_amount') ? $request->input('approved_amount') : $benefitRequest->approved_amount,
             'reviewed_by' => $request->user()->id,
             'reviewed_at' => now(),
             'review_notes' => $request->input('review_notes'),

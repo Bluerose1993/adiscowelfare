@@ -24,6 +24,7 @@ class BenefitRequest extends Model
         'subject',
         'description',
         'requested_amount',
+        'approved_amount',
         'incident_date',
         'status',
         'submitted_at',
@@ -37,6 +38,7 @@ class BenefitRequest extends Model
     {
         return [
             'requested_amount' => 'decimal:2',
+            'approved_amount' => 'decimal:2',
             'incident_date' => 'date',
             'submitted_at' => 'datetime',
             'reviewed_at' => 'datetime',
