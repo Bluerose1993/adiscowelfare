@@ -401,6 +401,9 @@ class WelfareWorkflowTest extends TestCase
         ])->assertSessionHasNoErrors();
         $benefitRequest = BenefitRequest::query()->where('staff_id', $staff->id)->firstOrFail();
 
+        $this->actingAs($admin)->get(route('admin.benefit-requests.show', $benefitRequest))
+            ->assertOk()->assertSee('Attached Proof')->assertSee('proof.pdf')->assertSee('View File');
+
         $this->actingAs($admin)->post(route('admin.benefit-requests.review', $benefitRequest), [
             'status' => BenefitRequest::STATUS_RETURNED,
             'review_notes' => 'Please correct the description and proof.',

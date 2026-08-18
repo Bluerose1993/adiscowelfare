@@ -15,6 +15,16 @@
                 <dt class="col-sm-4">Status</dt><dd class="col-sm-8"><span class="badge badge-info">{{ str_replace('_', ' ', $requestRecord->status) }}</span></dd>
                 <dt class="col-sm-4">Resulting Benefit</dt><dd class="col-sm-8">{{ $requestRecord->resultingBenefit ? $requestRecord->resultingBenefit->title : '-' }}</dd>
             </dl>
+            <hr>
+            <h5><i class="fas fa-paperclip"></i> Attached Proof</h5>
+            @forelse($requestRecord->attachments as $attachment)
+                <div class="d-flex flex-wrap align-items-center justify-content-between border rounded p-3 mb-2">
+                    <div><strong>{{ $attachment->original_filename }}</strong><div class="small text-muted">{{ $attachment->mime_type }} · {{ number_format($attachment->size / 1024, 1) }} KB</div></div>
+                    <a class="btn btn-outline-primary" href="{{ Storage::disk('public')->url($attachment->path) }}" target="_blank" rel="noopener"><i class="fas fa-eye"></i> View File</a>
+                </div>
+            @empty
+                <div class="alert alert-secondary mb-0">No proof file is attached to this historical request.</div>
+            @endforelse
         </div></div>
     </div>
     <div class="col-lg-5">
