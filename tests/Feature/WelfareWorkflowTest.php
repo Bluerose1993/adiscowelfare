@@ -210,11 +210,26 @@ class WelfareWorkflowTest extends TestCase
             'description' => 'Requesting the configured welfare support benefit.',
             'requested_amount' => 999999,
             'incident_date' => '2026-07-01',
+            'attachment' => UploadedFile::fake()->create('proof.pdf', 100, 'application/pdf'),
         ])->assertSessionHasNoErrors();
 
         $request = BenefitRequest::query()->where('staff_id', $staff->id)->firstOrFail();
         $this->assertSame((float) $type->default_amount, (float) $request->requested_amount);
         $this->assertSame(500.0, (float) $request->requested_amount);
+    }
+
+    public function test_benefit_request_requires_uploaded_proof(): void
+    {
+        $staff = $this->createStaffWithUser('PROOF01', 'Proof Applicant');
+        $type = BenefitType::query()->firstOrFail();
+
+        $this->actingAs($staff->user)->post(route('staff.requests.store'), [
+            'benefit_type_id' => $type->id,
+            'subject' => 'Request without proof',
+            'description' => 'This submission intentionally has no proof file.',
+        ])->assertSessionHasErrors('attachment');
+
+        $this->assertDatabaseMissing('benefit_requests', ['staff_id' => $staff->id]);
     }
 
     public function test_inactive_session_is_ended_using_system_timeout_setting(): void
@@ -362,6 +377,7 @@ class WelfareWorkflowTest extends TestCase
             'subject' => 'Hospital support',
             'description' => 'Requesting support after hospitalisation.',
             'requested_amount' => 200,
+            'attachment' => UploadedFile::fake()->create('proof.pdf', 100, 'application/pdf'),
         ])->assertRedirect();
 
         $this->assertDatabaseHas('benefit_requests', [
@@ -369,6 +385,40 @@ class WelfareWorkflowTest extends TestCase
             'subject' => 'Hospital support',
             'status' => BenefitRequest::STATUS_SUBMITTED,
         ]);
+    }
+
+    public function test_admin_can_return_request_and_staff_sees_notice_and_resubmits(): void
+    {
+        $admin = $this->admin();
+        $staff = $this->createStaffWithUser('ADJUST01', 'Adjustment Staff');
+        $type = BenefitType::query()->firstOrFail();
+
+        $this->actingAs($staff->user)->post(route('staff.requests.store'), [
+            'benefit_type_id' => $type->id,
+            'subject' => 'Request needing correction',
+            'description' => 'Original description that needs correction.',
+            'attachment' => UploadedFile::fake()->create('proof.pdf', 100, 'application/pdf'),
+        ])->assertSessionHasNoErrors();
+        $benefitRequest = BenefitRequest::query()->where('staff_id', $staff->id)->firstOrFail();
+
+        $this->actingAs($admin)->post(route('admin.benefit-requests.review', $benefitRequest), [
+            'status' => BenefitRequest::STATUS_RETURNED,
+            'review_notes' => 'Please correct the description and proof.',
+        ])->assertSessionHasNoErrors();
+
+        $this->assertSame(BenefitRequest::STATUS_RETURNED, $benefitRequest->fresh()->status);
+        $this->actingAs($staff->user)->get(route('staff.dashboard'))
+            ->assertOk()->assertSee('Benefit Request Adjustment Required')->assertSee('Please correct the description and proof.');
+
+        $this->actingAs($staff->user)->put(route('staff.requests.update', $benefitRequest), [
+            'benefit_type_id' => $type->id,
+            'subject' => 'Corrected request',
+            'description' => 'The corrected request description is now complete.',
+            'incident_date' => '2026-08-01',
+        ])->assertSessionHasNoErrors()->assertRedirect(route('staff.requests.show', $benefitRequest));
+
+        $this->assertSame(BenefitRequest::STATUS_SUBMITTED, $benefitRequest->fresh()->status);
+        $this->assertNull($benefitRequest->fresh()->review_notes);
     }
 
     public function test_admin_can_approve_request_and_only_one_benefit_is_created(): void

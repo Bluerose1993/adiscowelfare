@@ -1,6 +1,7 @@
 @extends('layouts.app', ['title' => 'Benefit Request'])
 
 @section('content')
+@if($requestRecord->status === \App\Models\BenefitRequest::STATUS_RETURNED)<div class="alert alert-warning"><strong>Adjustment required:</strong> {{ $requestRecord->review_notes }} <a href="{{ route('staff.requests.edit', $requestRecord) }}" class="btn btn-sm btn-warning ml-2"><i class="fas fa-edit"></i> Edit and Resubmit</a></div>@endif
 <div class="card"><div class="card-body">
     <h4>{{ $requestRecord->subject }}</h4>
     <p>{{ $requestRecord->description }}</p>

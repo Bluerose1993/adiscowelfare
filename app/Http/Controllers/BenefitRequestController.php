@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class BenefitRequestController extends Controller
@@ -138,7 +139,69 @@ class BenefitRequestController extends Controller
 
         return view('staff.requests.form', [
             'benefitTypes' => BenefitType::query()->where('is_active', true)->orderBy('name')->get(),
+            'requestRecord' => null,
         ]);
+    }
+
+    public function staffEdit(Request $request, BenefitRequest $benefitRequest): View
+    {
+        $this->authorize('view', $benefitRequest);
+        abort_unless($benefitRequest->staff_id === $request->user()->staff?->id && $benefitRequest->status === BenefitRequest::STATUS_RETURNED, 403, 'Only returned requests can be adjusted.');
+
+        return view('staff.requests.form', [
+            'benefitTypes' => BenefitType::query()->where('is_active', true)->orderBy('name')->get(),
+            'requestRecord' => $benefitRequest->load('attachments'),
+        ]);
+    }
+
+    public function staffUpdate(Request $request, BenefitRequest $benefitRequest, AuditService $audit): RedirectResponse
+    {
+        $this->authorize('view', $benefitRequest);
+        abort_unless($benefitRequest->staff_id === $request->user()->staff?->id && $benefitRequest->status === BenefitRequest::STATUS_RETURNED, 403, 'Only returned requests can be adjusted.');
+        $validated = $request->validate([
+            'benefit_type_id' => ['required', Rule::exists('benefit_types', 'id')->where('is_active', true)],
+            'subject' => ['required', 'string', 'max:255'],
+            'description' => ['required', 'string', 'min:10'],
+            'incident_date' => ['nullable', 'date'],
+            'attachment' => [$benefitRequest->attachments()->exists() ? 'nullable' : 'required', 'file', 'mimes:pdf,jpg,jpeg,png,doc,docx', 'max:5120'],
+        ], [], ['attachment' => 'upload proof']);
+        $benefitType = BenefitType::query()->where('is_active', true)->findOrFail($validated['benefit_type_id']);
+        $old = $benefitRequest->toArray();
+        $oldPaths = collect();
+
+        DB::transaction(function () use ($request, $benefitRequest, $benefitType, $validated, &$oldPaths) {
+            $benefitRequest->update([
+                'benefit_type_id' => $benefitType->id,
+                'subject' => $validated['subject'],
+                'description' => $validated['description'],
+                'incident_date' => $validated['incident_date'] ?? null,
+                'requested_amount' => $benefitType->default_amount,
+                'approved_amount' => null,
+                'status' => BenefitRequest::STATUS_SUBMITTED,
+                'reviewed_by' => null,
+                'reviewed_at' => null,
+                'review_notes' => null,
+            ]);
+            if ($request->hasFile('attachment')) {
+                $oldPaths = $benefitRequest->attachments()->pluck('path');
+                $benefitRequest->attachments()->delete();
+                $file = $request->file('attachment');
+                $stored = $file->store('benefit-request-attachments', 'public');
+                BenefitRequestAttachment::query()->create([
+                    'benefit_request_id' => $benefitRequest->id,
+                    'original_filename' => $file->getClientOriginalName(),
+                    'stored_filename' => Str::afterLast($stored, '/'),
+                    'path' => $stored,
+                    'mime_type' => $file->getMimeType() ?: 'application/octet-stream',
+                    'size' => $file->getSize(),
+                    'uploaded_by' => $request->user()->id,
+                ]);
+            }
+        });
+        $oldPaths->each(fn (string $path) => Storage::disk('public')->delete($path));
+        $audit->log('benefit_request_adjusted_and_resubmitted', $benefitRequest, $old, $benefitRequest->fresh()->toArray(), $request);
+
+        return redirect()->route('staff.requests.show', $benefitRequest)->with('success', 'Your adjustments were submitted for review.');
     }
 
     public function store(SubmitBenefitRequestRequest $request, AuditService $audit): RedirectResponse

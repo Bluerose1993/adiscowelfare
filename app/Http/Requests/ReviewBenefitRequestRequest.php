@@ -14,9 +14,9 @@ class ReviewBenefitRequestRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required', 'in:under_review,approved,rejected,cancelled,paid'],
+            'status' => ['required', 'in:under_review,approved,rejected,cancelled,paid,returned'],
             'approved_amount' => ['nullable', 'required_if:status,approved', 'numeric', 'min:0.01', 'max:99999999.99'],
-            'review_notes' => ['nullable', 'string'],
+            'review_notes' => ['nullable', 'required_if:status,returned', 'string', 'min:5'],
         ];
     }
 }

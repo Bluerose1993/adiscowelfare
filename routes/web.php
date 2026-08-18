@@ -124,5 +124,7 @@ Route::middleware(['auth', 'role:Staff Member', 'password.changed'])->prefix('st
     Route::get('/benefit-requests', [BenefitRequestController::class, 'staffIndex'])->name('requests.index');
     Route::get('/benefit-requests/create', [BenefitRequestController::class, 'create'])->name('requests.create');
     Route::post('/benefit-requests', [BenefitRequestController::class, 'store'])->name('requests.store');
+    Route::get('/benefit-requests/{benefitRequest}/edit', [BenefitRequestController::class, 'staffEdit'])->name('requests.edit');
+    Route::put('/benefit-requests/{benefitRequest}', [BenefitRequestController::class, 'staffUpdate'])->name('requests.update');
     Route::get('/benefit-requests/{benefitRequest}', [BenefitRequestController::class, 'staffShow'])->name('requests.show');
 });

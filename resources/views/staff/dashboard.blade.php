@@ -5,6 +5,7 @@
 @endsection
 
 @section('content')
+@if($adjustmentRequests->isNotEmpty())<div class="card card-warning"><div class="card-header"><h3 class="card-title"><i class="fas fa-exclamation-circle"></i> Benefit Request Adjustment Required</h3></div><div class="card-body">@foreach($adjustmentRequests as $adjustmentRequest)<div class="d-flex flex-wrap align-items-center justify-content-between mb-2"><div><strong>{{ $adjustmentRequest->subject }}</strong><div>{{ $adjustmentRequest->review_notes }}</div></div><a href="{{ route('staff.requests.edit', $adjustmentRequest) }}" class="btn btn-warning"><i class="fas fa-edit"></i> Make Adjustments</a></div>@endforeach</div></div>@endif
 <div class="card"><div class="card-body"><h4>Welcome, {{ $staff->full_name }}</h4><p class="mb-0">Staff ID: {{ $staff->staff_id ?: 'Unverified' }} <span class="year-context"><i class="fas fa-calendar-alt"></i> Showing {{ $year }}</span></p></div></div>
 <div class="row">
     @foreach([

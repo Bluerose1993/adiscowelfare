@@ -21,7 +21,12 @@ class SubmitBenefitRequestRequest extends FormRequest
             'description' => ['required', 'string', 'min:10'],
             'requested_amount' => ['nullable', 'numeric', 'min:0.01', 'max:99999999.99'],
             'incident_date' => ['nullable', 'date'],
-            'attachment' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,doc,docx', 'max:5120'],
+            'attachment' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,doc,docx', 'max:5120'],
         ];
+    }
+
+    public function attributes(): array
+    {
+        return ['attachment' => 'upload proof'];
     }
 }

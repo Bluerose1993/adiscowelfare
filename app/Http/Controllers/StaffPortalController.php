@@ -32,6 +32,7 @@ class StaffPortalController extends Controller
             'year' => $year,
             'availableYears' => $availableYears,
             'matrix' => $dues->monthlyBreakdown($staff, $year),
+            'adjustmentRequests' => BenefitRequest::query()->with('benefitType')->where('staff_id', $staff->id)->where('status', BenefitRequest::STATUS_RETURNED)->latest('reviewed_at')->get(),
             'summary' => [
                 'paid_year' => $paidYear,
                 'expected_year' => $expectedYear,
