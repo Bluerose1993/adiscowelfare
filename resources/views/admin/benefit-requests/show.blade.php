@@ -18,9 +18,25 @@
             <hr>
             <h5><i class="fas fa-paperclip"></i> Attached Proof</h5>
             @forelse($requestRecord->attachments as $attachment)
-                <div class="d-flex flex-wrap align-items-center justify-content-between border rounded p-3 mb-2">
-                    <div><strong>{{ $attachment->original_filename }}</strong><div class="small text-muted">{{ $attachment->mime_type }} · {{ number_format($attachment->size / 1024, 1) }} KB</div></div>
-                    <a class="btn btn-outline-primary" href="{{ Storage::disk('public')->url($attachment->path) }}" target="_blank" rel="noopener"><i class="fas fa-eye"></i> View File</a>
+                @php
+                    $attachmentUrl = Storage::disk('public')->url($attachment->path);
+                    $isImage = str_starts_with($attachment->mime_type, 'image/');
+                    $isPdf = $attachment->mime_type === 'application/pdf' || strtolower(pathinfo($attachment->original_filename, PATHINFO_EXTENSION)) === 'pdf';
+                    $extension = strtoupper(pathinfo($attachment->original_filename, PATHINFO_EXTENSION));
+                @endphp
+                <div class="attachment-preview-card mb-3">
+                    <a class="attachment-thumbnail" href="{{ $attachmentUrl }}" target="_blank" rel="noopener" aria-label="Preview {{ $attachment->original_filename }}">
+                        @if($isImage)
+                            <img src="{{ $attachmentUrl }}" alt="Preview of {{ $attachment->original_filename }}" loading="lazy">
+                        @elseif($isPdf)
+                            <iframe src="{{ $attachmentUrl }}#toolbar=0&navpanes=0&scrollbar=0" title="Preview of {{ $attachment->original_filename }}" loading="lazy" tabindex="-1"></iframe>
+                            <span class="attachment-preview-overlay"><i class="fas fa-search-plus"></i></span>
+                        @else
+                            <span class="attachment-document-icon"><i class="fas fa-file-word"></i><strong>{{ $extension ?: 'FILE' }}</strong><small>Open to preview</small></span>
+                        @endif
+                    </a>
+                    <div class="attachment-preview-details"><div><strong>{{ $attachment->original_filename }}</strong><div class="small text-muted">{{ $attachment->mime_type }} · {{ number_format($attachment->size / 1024, 1) }} KB</div></div>
+                    <a class="btn btn-outline-primary" href="{{ $attachmentUrl }}" target="_blank" rel="noopener"><i class="fas fa-eye"></i> View File</a></div>
                 </div>
             @empty
                 <div class="alert alert-secondary mb-0">No proof file is attached to this historical request.</div>

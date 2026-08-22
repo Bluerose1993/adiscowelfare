@@ -402,7 +402,7 @@ class WelfareWorkflowTest extends TestCase
         $benefitRequest = BenefitRequest::query()->where('staff_id', $staff->id)->firstOrFail();
 
         $this->actingAs($admin)->get(route('admin.benefit-requests.show', $benefitRequest))
-            ->assertOk()->assertSee('Attached Proof')->assertSee('proof.pdf')->assertSee('View File');
+            ->assertOk()->assertSee('Attached Proof')->assertSee('proof.pdf')->assertSee('View File')->assertSee('attachment-thumbnail', false);
 
         $this->actingAs($admin)->post(route('admin.benefit-requests.review', $benefitRequest), [
             'status' => BenefitRequest::STATUS_RETURNED,

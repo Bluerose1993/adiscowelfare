@@ -298,7 +298,19 @@ label { color: #3d485a; font-size: .84rem; font-weight: 700; }
 .allocation-chips { display: flex; flex-wrap: wrap; gap: .5rem; }
 .allocation-chips span { padding: .45rem .7rem; border-radius: 999px; color: #075985; background: #e0f2fe; font-size: .78rem; font-weight: 700; }
 .allocation-detail-row td { background: #f8fafc !important; }
+.attachment-preview-card { display: grid; grid-template-columns: 180px minmax(0,1fr); gap: 1rem; padding: .8rem; border: 1px solid var(--welfare-border); border-radius: 14px; background: #f8fafc; }
+.attachment-thumbnail { position: relative; display: grid; place-items: center; width: 180px; height: 132px; overflow: hidden; border: 1px solid #dbe2ea; border-radius: 11px; color: var(--welfare-ink); background: #fff; }
+.attachment-thumbnail:hover { color: var(--welfare-green); border-color: #5eead4; text-decoration: none; }
+.attachment-thumbnail img, .attachment-thumbnail iframe { width: 100%; height: 100%; border: 0; object-fit: cover; pointer-events: none; }
+.attachment-preview-overlay { position: absolute; right: .5rem; bottom: .5rem; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: #fff; background: rgba(15,23,42,.72); }
+.attachment-document-icon { display: flex; flex-direction: column; align-items: center; gap: .2rem; }
+.attachment-document-icon i { color: #2563eb; font-size: 2.8rem; }
+.attachment-document-icon strong { font-size: .72rem; letter-spacing: .08em; }
+.attachment-document-icon small { color: var(--welfare-muted); }
+.attachment-preview-details { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-width: 0; }
+.attachment-preview-details strong { display: block; overflow-wrap: anywhere; }
 @media (max-width: 767.98px) { .mode-switch-layout { grid-template-columns: 1fr; } .mode-switch-form { flex-direction: column; } .mode-switch-form .form-control { width: 100%; } .debug-mode-banner span { display: none; } }
+@media (max-width: 575.98px) { .attachment-preview-card { grid-template-columns: 1fr; } .attachment-thumbnail { width: 100%; height: 180px; } .attachment-preview-details { align-items: flex-start; flex-direction: column; } }
 
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition: none !important; }
