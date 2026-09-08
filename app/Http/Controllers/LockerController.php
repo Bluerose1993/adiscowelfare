@@ -23,6 +23,19 @@ class LockerController extends Controller
         ]);
     }
 
+    public function printRegister(Request $request): View
+    {
+        $search = trim((string) $request->input('search'));
+
+        return view('admin.lockers.print', [
+            'staff' => Staff::query()
+                ->search($search)
+                ->orderBy('full_name')
+                ->get(),
+            'search' => $search,
+        ]);
+    }
+
     public function assign(Request $request, Staff $staff, AuditService $audit): RedirectResponse
     {
         $validated = $request->validate(['locker_number' => ['nullable', 'string', 'max:100', Rule::unique('staff', 'locker_number')->ignore($staff->id)]]);
