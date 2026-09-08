@@ -17,6 +17,7 @@
                 <p class="mb-1"><strong>Staff ID:</strong> {{ $staff->staff_id ?: 'Unverified' }}</p>
                 <p class="mb-1"><strong>Phone:</strong> {{ $staff->phone }}</p>
                 <p class="mb-1"><strong>Department:</strong> {{ $staff->department }}</p>
+                <p class="mb-1"><strong>Locker Number:</strong> {{ $staff->locker_number ?: 'Not assigned' }}</p>
                 <p class="mb-1"><strong>Position:</strong> {{ $staff->position }}</p>
                 <span class="badge badge-{{ $staff->is_active ? 'success' : 'secondary' }}">{{ $staff->is_active ? 'Active' : 'Inactive' }}</span>
             </div>

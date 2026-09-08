@@ -10,6 +10,7 @@
     <div class="col-md-6 form-group"><label>Phone</label><input name="phone" class="form-control" value="{{ old('phone', $staff->phone) }}"></div>
     <div class="col-md-6 form-group"><label>Email</label><input name="email" type="email" class="form-control" value="{{ old('email', $staff->email) }}"></div>
     <div class="col-md-6 form-group"><label>Department</label><input name="department" class="form-control" value="{{ old('department', $staff->department) }}"></div>
+    <div class="col-md-6 form-group"><label>Locker Number</label><input name="locker_number" class="form-control" value="{{ old('locker_number', $staff->locker_number) }}" placeholder="Not assigned"><small class="text-muted">You may record your existing locker number or apply for a locker from My Locker.</small></div>
     <div class="col-md-6 form-group"><label>Position</label><input name="position" class="form-control" value="{{ old('position', $staff->position) }}"></div>
     <div class="col-md-4 form-group"><label>Employment Status</label><input name="employment_status" class="form-control" value="{{ old('employment_status', $staff->employment_status) }}"></div>
     <div class="col-md-4 form-group"><label>Date Joined</label><input name="date_joined" type="date" class="form-control" value="{{ old('date_joined', $staff->date_joined?->format('Y-m-d')) }}"></div>

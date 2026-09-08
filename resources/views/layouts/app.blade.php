@@ -73,6 +73,7 @@
                             @can('manage staff')
                             <li class="nav-header">STAFF MANAGEMENT</li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('admin.staff.index') }}"><i class="nav-icon fas fa-users"></i><p>All Staff</p></a></li>
+                            <li class="nav-item"><a class="nav-link" href="{{ route('admin.lockers.index') }}"><i class="nav-icon fas fa-box"></i><p>Locker Assignments</p></a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('admin.staff.create') }}"><i class="nav-icon fas fa-user-plus"></i><p>Add Staff</p></a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('admin.import.index') }}"><i class="nav-icon fas fa-file-import"></i><p>Import Staff</p></a></li>
                             @endcan
@@ -116,6 +117,7 @@
                             <li class="nav-item"><a class="nav-link" href="{{ route('staff.requests.index') }}"><i class="nav-icon fas fa-file-alt"></i><p>My Requests</p></a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('staff.requests.create') }}"><i class="nav-icon fas fa-plus-circle"></i><p>Submit Request</p></a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('staff.profile') }}"><i class="nav-icon fas fa-user"></i><p>My Profile</p></a></li>
+                            <li class="nav-item"><a class="nav-link" href="{{ route('staff.lockers.create') }}"><i class="nav-icon fas fa-box"></i><p>My Locker</p></a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('staff.password.edit') }}"><i class="nav-icon fas fa-key"></i><p>Change Password</p></a></li>
                         @endif
                     </ul>

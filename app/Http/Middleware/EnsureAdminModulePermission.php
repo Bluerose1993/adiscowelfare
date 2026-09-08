@@ -19,6 +19,7 @@ class EnsureAdminModulePermission
             $name === 'admin.dashboard' => 'view dashboard',
             str_starts_with($name, 'admin.administrators.') => 'manage administrators',
             $name === 'admin.staff.import' || str_starts_with($name, 'admin.staff.') => 'manage staff',
+            str_starts_with($name, 'admin.lockers.') => 'manage staff',
             str_starts_with($name, 'admin.dues.'), str_starts_with($name, 'admin.import.') => 'manage dues',
             str_starts_with($name, 'admin.benefit-requests.') => 'review benefit requests',
             str_starts_with($name, 'admin.benefits.'), str_starts_with($name, 'admin.benefit-types.') => 'manage benefits',

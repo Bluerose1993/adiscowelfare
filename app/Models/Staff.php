@@ -23,6 +23,7 @@ class Staff extends Model
         'email',
         'gender',
         'department',
+        'locker_number',
         'position',
         'employment_status',
         'date_joined',
@@ -63,6 +64,11 @@ class Staff extends Model
     public function deletionRequests(): HasMany
     {
         return $this->hasMany(StaffDeletionRequest::class);
+    }
+
+    public function lockerRequests(): HasMany
+    {
+        return $this->hasMany(LockerRequest::class);
     }
 
     public function scopeActive(Builder $query): Builder

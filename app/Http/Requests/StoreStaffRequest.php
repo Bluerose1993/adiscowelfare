@@ -23,6 +23,7 @@ class StoreStaffRequest extends FormRequest
             'email' => ['nullable', 'email', 'max:255'],
             'gender' => ['nullable', 'string', 'max:50'],
             'department' => ['nullable', 'string', 'max:150'],
+            'locker_number' => ['nullable', 'string', 'max:100', Rule::unique('staff', 'locker_number')->ignore($staffId)],
             'position' => ['nullable', 'string', 'max:150'],
             'employment_status' => ['nullable', 'string', 'max:100'],
             'date_joined' => ['nullable', 'date'],

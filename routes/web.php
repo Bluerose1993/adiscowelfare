@@ -12,6 +12,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DuesPaymentController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ImportController;
+use App\Http\Controllers\LockerController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StaffController;
@@ -62,6 +63,10 @@ Route::middleware(['auth', 'role:Administrator', 'admin.module'])->prefix('admin
     Route::post('staff/deletion-requests/{deletionRequest}/approve', [StaffController::class, 'approveDeletion'])->name('staff.deletion-requests.approve');
     Route::post('staff/deletion-requests/{deletionRequest}/reject', [StaffController::class, 'rejectDeletion'])->name('staff.deletion-requests.reject');
     Route::post('staff/import', [StaffImportController::class, 'store'])->name('staff.import');
+    Route::get('lockers', [LockerController::class, 'adminIndex'])->name('lockers.index');
+    Route::put('lockers/staff/{staff}', [LockerController::class, 'assign'])->name('lockers.assign');
+    Route::post('lockers/requests/{lockerRequest}/approve', [LockerController::class, 'approve'])->name('lockers.approve');
+    Route::post('lockers/requests/{lockerRequest}/reject', [LockerController::class, 'reject'])->name('lockers.reject');
 
     Route::get('dues/record', [DuesPaymentController::class, 'create'])->name('dues.record');
     Route::get('dues/search', [DuesPaymentController::class, 'search'])->name('dues.search');
@@ -121,6 +126,8 @@ Route::middleware(['auth', 'role:Staff Member', 'password.changed'])->prefix('st
     Route::put('/profile', [StaffPortalController::class, 'updateProfile'])->name('profile.update');
     Route::get('/change-password', [StaffPortalController::class, 'changePassword'])->name('password.edit');
     Route::post('/change-password', [StaffPortalController::class, 'updatePassword'])->name('password.update');
+    Route::get('/locker', [LockerController::class, 'staffCreate'])->name('lockers.create');
+    Route::post('/locker', [LockerController::class, 'staffStore'])->name('lockers.store');
     Route::get('/benefit-requests', [BenefitRequestController::class, 'staffIndex'])->name('requests.index');
     Route::get('/benefit-requests/create', [BenefitRequestController::class, 'create'])->name('requests.create');
     Route::post('/benefit-requests', [BenefitRequestController::class, 'store'])->name('requests.store');

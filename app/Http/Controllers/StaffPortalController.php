@@ -92,6 +92,7 @@ class StaffPortalController extends Controller
             'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($request->user()->id)],
             'gender' => ['nullable', 'string', 'max:50'],
             'department' => ['nullable', 'string', 'max:150'],
+            'locker_number' => ['nullable', 'string', 'max:100', Rule::unique('staff', 'locker_number')->ignore($staff->id)],
             'position' => ['nullable', 'string', 'max:150'],
             'employment_status' => ['nullable', 'string', 'max:100'],
             'date_joined' => ['nullable', 'date'],

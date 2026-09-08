@@ -36,6 +36,7 @@ class AdminProfileController extends Controller
             $rules += [
                 'phone' => ['nullable', 'string', 'max:30'], 'gender' => ['nullable', 'string', 'max:50'],
                 'department' => ['nullable', 'string', 'max:150'], 'position' => ['nullable', 'string', 'max:150'],
+                'locker_number' => ['nullable', 'string', 'max:100', Rule::unique('staff', 'locker_number')->ignore($staff->id)],
                 'employment_status' => ['nullable', 'string', 'max:100'], 'date_joined' => ['nullable', 'date'],
                 'association_joined_at' => ['nullable', 'date'], 'notes' => ['nullable', 'string', 'max:2000'],
             ];

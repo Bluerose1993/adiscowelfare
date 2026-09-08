@@ -127,6 +127,30 @@ class WelfareWorkflowTest extends TestCase
         $this->assertFalse($admin->fresh()->must_change_password);
     }
 
+    public function test_staff_can_apply_for_locker_and_admin_can_approve_and_assign_it(): void
+    {
+        $admin = $this->admin();
+        $staff = $this->createStaffWithUser('LOCKER01', 'Locker Applicant');
+
+        $this->actingAs($staff->user)->post(route('staff.lockers.store'), [
+            'preferred_locker_number' => 'L-24',
+            'notes' => 'Please assign a locker near the staff room.',
+        ])->assertSessionHasNoErrors()->assertSessionHas('success');
+
+        $lockerRequest = \App\Models\LockerRequest::query()->where('staff_id', $staff->id)->firstOrFail();
+        $this->assertSame('pending', $lockerRequest->status);
+        $this->actingAs($admin)->get(route('admin.lockers.index'))->assertOk()->assertSee('Locker Applicant')->assertSee('L-24');
+
+        $this->actingAs($admin)->post(route('admin.lockers.approve', $lockerRequest), [
+            'locker_number' => 'L-24',
+            'review_notes' => 'Approved and assigned.',
+        ])->assertSessionHasNoErrors()->assertSessionHas('success');
+
+        $this->assertSame('L-24', $staff->fresh()->locker_number);
+        $this->assertSame('approved', $lockerRequest->fresh()->status);
+        $this->actingAs($staff->user)->get(route('staff.profile'))->assertOk()->assertSee('L-24');
+    }
+
     public function test_staff_can_log_in(): void
     {
         $staff = $this->createStaffWithUser();
