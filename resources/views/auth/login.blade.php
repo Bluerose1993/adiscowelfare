@@ -14,15 +14,15 @@
                 <small>{{ \App\Models\Setting::value('institution_name', '') }}</small>
             </div>
             <div class="card-body">
-                <p class="login-box-msg">Sign in with your username or email</p>
+                <p class="login-box-msg">Sign in with your Staff ID</p>
                 <form action="{{ route('login.store') }}" method="post" data-prevent-double-submit="true">
                     @csrf
                     <div class="input-group mb-3">
-                        <input name="login" value="{{ old('login') }}" class="form-control" placeholder="Username or email" required autofocus>
+                        <input name="login" value="{{ old('login') }}" class="form-control" placeholder="Staff ID" aria-label="Staff ID" required autofocus>
                         <div class="input-group-append"><div class="input-group-text"><span class="fas fa-user"></span></div></div>
                     </div>
                     <div class="input-group mb-3">
-                        <input name="password" type="password" class="form-control" placeholder="Password" required>
+                        <input name="password" type="password" class="form-control" placeholder="Phone number or password" aria-label="Phone number or password" required>
                         <div class="input-group-append"><div class="input-group-text"><span class="fas fa-lock"></span></div></div>
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Sign In</button>

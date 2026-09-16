@@ -8,6 +8,7 @@ use App\Services\AuditService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -30,10 +31,15 @@ class LoginController extends Controller
             ]);
         }
 
-        $login = $request->input('login');
-        $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+        $login = trim($request->input('login'));
+        // Staff sign in with their Staff ID. Keep username/email matching for existing administrator accounts.
+        $user = User::query()->where('status', 'active')
+            ->where(function ($query) use ($login) {
+                $query->where('username', $login)->orWhere('email', $login)
+                    ->orWhereHas('staff', fn ($staff) => $staff->where('staff_id', $login)->orWhere('phone', $login));
+            })->first();
 
-        if (! Auth::attempt([$field => $login, 'password' => $request->input('password'), 'status' => 'active'], $request->boolean('remember'))) {
+        if (! $user || ! Auth::attempt(['username' => $user->username, 'password' => $request->input('password'), 'status' => 'active'], $request->boolean('remember'))) {
             RateLimiter::hit($key, 60);
 
             throw ValidationException::withMessages([
