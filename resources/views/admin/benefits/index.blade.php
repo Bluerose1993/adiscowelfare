@@ -51,7 +51,6 @@
 </div></div>
 
 @can('manage benefits')
-@if($pendingDeletionRequests->isNotEmpty())<div class="card card-warning"><div class="card-header"><h3 class="card-title">Pending Benefit Deletions</h3></div><div class="card-body">@foreach($pendingDeletionRequests as $deletion)<div class="approval-request"><div><strong>{{ $deletion->benefit?->staff?->full_name }} — {{ $deletion->benefit?->title }}</strong><small class="d-block">Requested by {{ $deletion->requester?->name }}: {{ $deletion->reason }}</small></div><form method="post" action="{{ route('admin.benefits.deletion-requests.approve', $deletion) }}">@csrf<div class="input-group"><input type="password" name="password" class="form-control" placeholder="Approver password" required><div class="input-group-append"><button class="btn btn-danger">Approve Delete</button></div></div></form><form method="post" action="{{ route('admin.benefits.deletion-requests.reject', $deletion) }}">@csrf<input type="hidden" name="review_notes" value="Rejected by reviewing administrator"><div class="input-group"><input type="password" name="password" class="form-control" placeholder="Approver password" required><div class="input-group-append"><button class="btn btn-outline-secondary">Reject</button></div></div></form></div>@endforeach</div></div>@endif
 <div class="card"><div class="card-header">
     <h3 class="card-title">Directly Recorded Benefits</h3>
 </div><div class="card-body table-responsive">

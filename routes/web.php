@@ -99,6 +99,7 @@ Route::middleware(['auth', 'role:Administrator', 'admin.module'])->prefix('admin
 
     Route::get('reports/dues', [ReportController::class, 'dues'])->name('reports.dues');
     Route::get('reports/benefits', [ReportController::class, 'benefits'])->name('reports.benefits');
+    Route::get('reports/benefits/print', [ReportController::class, 'printBenefits'])->name('reports.benefits.print');
     Route::get('reports/staff/{staff}/statement', [ReportController::class, 'statement'])->name('reports.statement');
 
     Route::get('exports/annual-dues-chart', [ExportController::class, 'duesChart'])->name('exports.annual-dues-chart');

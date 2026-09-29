@@ -7,6 +7,7 @@ use App\Models\BenefitType;
 use App\Models\DuesPayment;
 use App\Models\Staff;
 use App\Services\DuesCalculationService;
+use App\Services\BenefitExpenseReportService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -49,27 +50,38 @@ class ReportController extends Controller
         ]);
     }
 
-    public function benefits(Request $request): View
+    public function benefits(Request $request, BenefitExpenseReportService $expenses): View
     {
-        $query = Benefit::query()->with(['staff', 'benefitType'])->latest();
-
-        if ($request->filled('year')) {
-            $query->whereYear('created_at', $request->integer('year'));
-        }
-        if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
-        }
-        if ($request->filled('benefit_type_id')) {
-            $query->where('benefit_type_id', $request->integer('benefit_type_id'));
-        }
-        if ($request->filled('staff_id')) {
-            $query->where('staff_id', $request->integer('staff_id'));
-        }
+        $filters = $this->benefitFilters($request);
+        $query = $expenses->query($filters);
 
         return view('admin.reports.benefits', [
-            'benefits' => $query->paginate(50)->withQueryString(),
+            'expenses' => (clone $query)->orderByDesc('expense_date')->orderByDesc('record_id')->paginate(50)->withQueryString(),
+            'totalPaid' => (float) (clone $query)->sum('amount'),
+            'filters' => $filters,
             'benefitTypes' => BenefitType::query()->orderBy('name')->get(),
             'staff' => Staff::query()->orderBy('full_name')->get(),
+        ]);
+    }
+
+    public function printBenefits(Request $request, BenefitExpenseReportService $expenses): View
+    {
+        $filters = $this->benefitFilters($request);
+        $query = $expenses->query($filters);
+
+        return view('admin.reports.benefits-print', [
+            'expenses' => (clone $query)->orderByDesc('expense_date')->orderByDesc('record_id')->get(),
+            'totalPaid' => (float) (clone $query)->sum('amount'),
+            'filters' => $filters,
+        ]);
+    }
+
+    private function benefitFilters(Request $request): array
+    {
+        return $request->validate([
+            'year' => ['nullable', 'integer', 'between:2000,2100'],
+            'benefit_type_id' => ['nullable', 'integer', 'exists:benefit_types,id'],
+            'staff_id' => ['nullable', 'integer', 'exists:staff,id'],
         ]);
     }
 

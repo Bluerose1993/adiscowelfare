@@ -5,6 +5,7 @@ namespace App\Exports;
 use App\Models\Benefit;
 use App\Models\Setting;
 use App\Models\Staff;
+use App\Services\BenefitExpenseReportService;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithProperties;
@@ -33,11 +34,21 @@ class AnnualBenefitsChartExport implements FromArray, WithEvents, WithProperties
             ['No.', 'Staff ID', 'Names of Members', 'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEPT', 'OCT', 'NOV', 'DEC', 'TOTAL BENEFITS'],
         ];
 
+        $paidMonthly = $status === Benefit::STATUS_PAID
+            ? app(BenefitExpenseReportService::class)->query([
+                'year' => $this->year,
+                'benefit_type_id' => $this->filters['benefit_type_id'] ?? null,
+            ])->selectRaw('staff_id, MONTH(expense_date) as month_number, SUM(amount) as total')
+                ->groupBy('staff_id')->groupByRaw('MONTH(expense_date)')->get()->groupBy('staff_id')
+            : collect();
+
         Staff::query()
             ->when($this->filters['staff_id'] ?? null, fn ($query, $staffId) => $query->whereKey($staffId))
-            ->orderBy('full_name')->chunk(200, function ($staffMembers) use (&$rows, $status) {
+            ->orderBy('full_name')->chunk(200, function ($staffMembers) use (&$rows, $status, $paidMonthly) {
             foreach ($staffMembers as $staff) {
-                $monthly = Benefit::query()
+                $monthly = $status === Benefit::STATUS_PAID
+                    ? ($paidMonthly[$staff->id] ?? collect())->pluck('total', 'month_number')
+                    : Benefit::query()
                     ->where('staff_id', $staff->id)
                     ->where('status', $status)
                     ->when($this->filters['benefit_type_id'] ?? null, fn ($query, $type) => $query->where('benefit_type_id', $type))

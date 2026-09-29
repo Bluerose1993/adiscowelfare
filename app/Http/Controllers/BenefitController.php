@@ -43,7 +43,6 @@ class BenefitController extends Controller
         return view('admin.benefits.index', [
             'benefits' => $query->paginate(50, ['*'], 'benefits_page')->withQueryString(),
             'requests' => $requests->paginate(50, ['*'], 'requests_page')->withQueryString(),
-            'pendingDeletionRequests' => BenefitDeletionRequest::query()->where('status', 'pending')->with(['benefit.staff', 'requester'])->latest()->get(),
             'status' => $status,
         ]);
     }

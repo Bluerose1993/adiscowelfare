@@ -21,6 +21,14 @@ class EnsureAdminModulePermission
         if ($name === 'admin.benefit-requests.print' && ($request->user()?->can('manage benefits') || $request->user()?->can('review benefit requests'))) {
             return $next($request);
         }
+        if (in_array($name, [
+            'admin.benefits.deletion-requests.approve',
+            'admin.benefits.deletion-requests.reject',
+            'admin.benefit-requests.deletion-requests.approve',
+            'admin.benefit-requests.deletion-requests.reject',
+        ], true) && ($request->user()?->can('manage benefits') || $request->user()?->can('review benefit requests'))) {
+            return $next($request);
+        }
         $permission = match (true) {
             $name === 'admin.dashboard' => 'view dashboard',
             str_starts_with($name, 'admin.administrators.') => 'manage administrators',

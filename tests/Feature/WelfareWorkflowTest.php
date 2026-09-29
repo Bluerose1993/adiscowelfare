@@ -538,6 +538,80 @@ class WelfareWorkflowTest extends TestCase
             ->assertOk()->assertSee('Medical assistance');
     }
 
+    public function test_benefits_expense_report_counts_paid_requests_once_and_uses_payment_year(): void
+    {
+        $admin = $this->admin();
+        $staff = $this->createStaffWithUser('EXPENSE01', 'Expense Staff');
+        $type = BenefitType::query()->firstOrFail();
+
+        Benefit::query()->create([
+            'staff_id' => $staff->id, 'benefit_type_id' => $type->id,
+            'title' => 'Direct expense', 'amount' => 100,
+            'status' => Benefit::STATUS_PAID, 'payment_date' => '2024-12-03',
+            'created_by' => $admin->id,
+        ]);
+        $linked = Benefit::query()->create([
+            'staff_id' => $staff->id, 'benefit_type_id' => $type->id,
+            'title' => 'Linked request expense', 'amount' => 200,
+            'status' => Benefit::STATUS_PAID, 'payment_date' => '2024-12-04',
+            'created_by' => $admin->id,
+        ]);
+        BenefitRequest::query()->create([
+            'staff_id' => $staff->id, 'benefit_type_id' => $type->id,
+            'subject' => 'Linked request expense', 'description' => 'Previously approved request.',
+            'approved_amount' => 200, 'status' => BenefitRequest::STATUS_PAID,
+            'resulting_benefit_id' => $linked->id, 'reviewed_at' => now(),
+        ]);
+        BenefitRequest::query()->create([
+            'staff_id' => $staff->id, 'benefit_type_id' => $type->id,
+            'subject' => 'Historical paid request', 'description' => 'Paid without a linked benefit.',
+            'approved_amount' => 300, 'status' => BenefitRequest::STATUS_PAID,
+            'receipt_confirmed_at' => '2024-12-05 10:00:00',
+        ]);
+
+        $this->actingAs($admin)->get(route('admin.reports.benefits', ['year' => 2024]))
+            ->assertOk()->assertViewHas('totalPaid', 600.0)
+            ->assertViewHas('expenses', fn ($expenses) => $expenses->total() === 3)
+            ->assertSee('Historical paid request')->assertSee('GHS 600.00');
+        $this->actingAs($admin)->get(route('admin.reports.benefits.print', ['year' => 2024]))
+            ->assertOk()->assertSee('TOTAL PAID')->assertSee('GHS 600.00');
+    }
+
+    public function test_benefit_request_deletion_approval_is_visible_across_benefits_pages(): void
+    {
+        $requester = $this->admin();
+        $approver = User::factory()->create([
+            'name' => 'Second Benefits Administrator',
+            'username' => 'second-benefits-admin',
+            'password' => 'ApproverPassword123!',
+            'status' => 'active',
+        ]);
+        $approver->assignRole(Role::findByName('Administrator'));
+        $approver->syncPermissions([Permission::findByName('manage benefits')]);
+        \App\Models\Setting::query()->updateOrCreate(['key' => 'system_mode'], ['value' => 'production', 'type' => 'string']);
+
+        $staff = $this->createStaffWithUser('DELETEBR01', 'Deletion Test Staff');
+        $requestRecord = BenefitRequest::query()->create([
+            'staff_id' => $staff->id, 'benefit_type_id' => BenefitType::query()->firstOrFail()->id,
+            'subject' => 'Request awaiting deletion', 'description' => 'Test request.',
+            'status' => BenefitRequest::STATUS_SUBMITTED,
+        ]);
+        $this->actingAs($requester)->post(route('admin.benefit-requests.deletion-request', $requestRecord), [
+            'reason' => 'Duplicate request', 'password' => 'ChangeMe123!',
+        ])->assertSessionHasNoErrors();
+
+        $deletion = \App\Models\BenefitRequestDeletionRequest::query()->firstOrFail();
+        $this->actingAs($approver)->get(route('admin.benefits.index'))
+            ->assertOk()->assertSee('Benefit Deletions Awaiting Second Admin')
+            ->assertSee('Request awaiting deletion');
+        $this->actingAs($approver)->get(route('admin.benefit-types.index'))
+            ->assertOk()->assertSee('Request awaiting deletion');
+        $this->actingAs($approver)->post(route('admin.benefit-requests.deletion-requests.approve', $deletion), [
+            'password' => 'ApproverPassword123!',
+        ])->assertSessionHasNoErrors()->assertRedirect(route('admin.benefits.index'));
+        $this->assertDatabaseMissing('benefit_requests', ['id' => $requestRecord->id]);
+    }
+
     public function test_export_totals_match_database_totals(): void
     {
         $admin = $this->admin();

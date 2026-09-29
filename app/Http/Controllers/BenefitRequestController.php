@@ -36,7 +36,6 @@ class BenefitRequestController extends Controller
         return view('admin.benefit-requests.index', [
             'requests' => $query->paginate(50)->withQueryString(),
             'status' => $status,
-            'pendingDeletionRequests' => BenefitRequestDeletionRequest::query()->where('status', 'pending')->with(['benefitRequest.staff', 'requester'])->latest()->get(),
         ]);
     }
 
@@ -47,7 +46,7 @@ class BenefitRequestController extends Controller
         if (Setting::value('system_mode', 'production') === 'debug') {
             $this->deleteRequest($benefitRequest);
             $audit->log('benefit_request_deleted_debug_mode', null, [], ['request_id' => $benefitRequest->id, 'reason' => $validated['reason']], $request);
-            return redirect()->route('admin.benefit-requests.index')->with('success', 'Benefit request deleted immediately in Debug mode.');
+            return redirect()->route('admin.benefits.index')->with('success', 'Benefit request deleted immediately in Debug mode.');
         }
         if ($benefitRequest->deletionRequests()->where('status', 'pending')->exists()) {
             return back()->withErrors(['reason' => 'A deletion request is already awaiting approval.']);
@@ -66,7 +65,7 @@ class BenefitRequestController extends Controller
         $recordId = $benefitRequest->id;
         $this->deleteRequest($benefitRequest);
         $audit->log('benefit_request_deletion_approved', null, [], ['deleted_request_id' => $recordId], $request);
-        return redirect()->route('admin.benefit-requests.index')->with('success', 'Benefit request deletion approved and completed.');
+        return redirect()->route('admin.benefits.index')->with('success', 'Benefit request deletion approved and completed.');
     }
 
     public function rejectDeletion(Request $request, BenefitRequestDeletionRequest $deletionRequest, AuditService $audit): RedirectResponse
