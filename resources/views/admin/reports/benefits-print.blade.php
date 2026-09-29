@@ -30,15 +30,15 @@
     <div class="meta">Paid expenses · {{ $filters['year'] ?? 'All years' }} · Generated {{ now()->format('d M Y, H:i') }}</div>
     <div class="summary">{{ number_format($expenses->count()) }} paid transaction{{ $expenses->count() === 1 ? '' : 's' }} &nbsp;|&nbsp; Total paid: <strong>GHS {{ number_format($totalPaid, 2) }}</strong></div>
     <table>
-        <thead><tr><th>Payment Date</th><th>Staff ID</th><th>Staff</th><th>Benefit Type</th><th>Expense</th><th>Source</th><th class="amount">Amount (GHS)</th></tr></thead>
+        <thead><tr><th>Payment Date</th><th>Staff ID</th><th>Staff</th><th>Benefit Type</th><th class="amount">Amount (GHS)</th></tr></thead>
         <tbody>
             @forelse($expenses as $expense)
-                <tr><td>{{ $expense->expense_date ?: '—' }}</td><td>{{ $expense->staff_code }}</td><td>{{ $expense->staff_name }}</td><td>{{ $expense->benefit_type }}</td><td>{{ $expense->title }}</td><td>{{ $expense->source === 'request' ? 'Paid request' : 'Direct benefit' }} #{{ $expense->record_id }}</td><td class="amount">{{ number_format((float) $expense->amount, 2) }}</td></tr>
+                <tr><td>{{ $expense->expense_date ?: '—' }}</td><td>{{ $expense->staff_code }}</td><td>{{ $expense->staff_name }}</td><td>{{ $expense->benefit_type }}</td><td class="amount">{{ number_format((float) $expense->amount, 2) }}</td></tr>
             @empty
-                <tr><td colspan="7" style="text-align:center">No paid benefit expenses match these filters.</td></tr>
+                <tr><td colspan="5" style="text-align:center">No paid benefit expenses match these filters.</td></tr>
             @endforelse
         </tbody>
-        <tfoot><tr class="total"><td colspan="6" style="text-align:right">TOTAL PAID</td><td class="amount">GHS {{ number_format($totalPaid, 2) }}</td></tr></tfoot>
+        <tfoot><tr class="total"><td colspan="4" style="text-align:right">TOTAL PAID</td><td class="amount">GHS {{ number_format($totalPaid, 2) }}</td></tr></tfoot>
     </table>
     <script>window.addEventListener('load', () => window.print());</script>
 </body>
