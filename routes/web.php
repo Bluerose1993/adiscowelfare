@@ -90,6 +90,7 @@ Route::middleware(['auth', 'role:Administrator', 'admin.module'])->prefix('admin
     Route::post('benefits/deletion-requests/{deletionRequest}/reject', [BenefitController::class, 'rejectDeletion'])->name('benefits.deletion-requests.reject');
 
     Route::get('benefit-requests', [BenefitRequestController::class, 'adminIndex'])->name('benefit-requests.index');
+    Route::get('benefit-requests/{benefitRequest}/print', [BenefitRequestController::class, 'adminPrint'])->name('benefit-requests.print');
     Route::get('benefit-requests/{benefitRequest}', [BenefitRequestController::class, 'adminShow'])->name('benefit-requests.show');
     Route::post('benefit-requests/{benefitRequest}/review', [BenefitRequestController::class, 'review'])->name('benefit-requests.review');
     Route::post('benefit-requests/{benefitRequest}/deletion-request', [BenefitRequestController::class, 'requestDeletion'])->name('benefit-requests.deletion-request');
@@ -132,6 +133,8 @@ Route::middleware(['auth', 'role:Staff Member', 'password.changed'])->prefix('st
     Route::get('/benefit-requests', [BenefitRequestController::class, 'staffIndex'])->name('requests.index');
     Route::get('/benefit-requests/create', [BenefitRequestController::class, 'create'])->name('requests.create');
     Route::post('/benefit-requests', [BenefitRequestController::class, 'store'])->name('requests.store');
+    Route::get('/benefit-requests/{benefitRequest}/print', [BenefitRequestController::class, 'staffPrint'])->name('requests.print');
+    Route::post('/benefit-requests/{benefitRequest}/confirm-receipt', [BenefitRequestController::class, 'confirmReceipt'])->name('requests.confirm-receipt');
     Route::get('/benefit-requests/{benefitRequest}/edit', [BenefitRequestController::class, 'staffEdit'])->name('requests.edit');
     Route::put('/benefit-requests/{benefitRequest}', [BenefitRequestController::class, 'staffUpdate'])->name('requests.update');
     Route::get('/benefit-requests/{benefitRequest}', [BenefitRequestController::class, 'staffShow'])->name('requests.show');

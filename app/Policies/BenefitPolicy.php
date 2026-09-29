@@ -26,4 +26,9 @@ class BenefitPolicy
     {
         return $user->hasRole('Administrator');
     }
+
+    public function delete(User $user, Benefit $benefit): bool
+    {
+        return $user->hasRole('Administrator') && $user->can('manage benefits');
+    }
 }

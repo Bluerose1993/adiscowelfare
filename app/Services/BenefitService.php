@@ -36,6 +36,7 @@ class BenefitService
                 'approved_amount' => $amount,
                 'reviewed_by' => $userId,
                 'reviewed_at' => now(),
+                'approved_at' => now(),
                 'review_notes' => $notes,
                 'resulting_benefit_id' => $benefit->id,
             ]);

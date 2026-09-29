@@ -87,13 +87,10 @@
                             @if(auth()->user()->can('manage benefits') || auth()->user()->can('review benefit requests'))
                             <li class="nav-header">BENEFITS</li>
                             @endif
-                            @can('manage benefits')
                             <li class="nav-item"><a class="nav-link" href="{{ route('admin.benefits.index') }}"><i class="nav-icon fas fa-hand-holding-heart"></i><p>All Benefits</p></a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ route('admin.benefits.index', ['status' => 'pending']) }}"><i class="nav-icon fas fa-clock"></i><p>Pending Benefits</p></a></li>
+                            @can('manage benefits')
                             <li class="nav-item"><a class="nav-link" href="{{ route('admin.benefit-types.index') }}"><i class="nav-icon fas fa-tags"></i><p>Benefit Types</p></a></li>
-                            @endcan
-                            @can('review benefit requests')
-                            <li class="nav-item"><a class="nav-link" href="{{ route('admin.benefit-requests.index') }}"><i class="nav-icon fas fa-inbox"></i><p>Benefit Requests</p></a></li>
                             @endcan
                             @can('view reports')
                             <li class="nav-header">REPORTS</li>

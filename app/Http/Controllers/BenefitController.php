@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreBenefitRequest;
 use App\Models\Benefit;
+use App\Models\BenefitRequest;
 use App\Models\BenefitDeletionRequest;
 use App\Models\BenefitType;
 use App\Models\Setting;
@@ -20,16 +21,30 @@ class BenefitController extends Controller
     {
         $this->authorize('viewAny', Benefit::class);
 
-        $query = Benefit::query()->with(['staff', 'benefitType'])->latest();
+        $status = $request->query('status') ?: 'all';
+        abort_unless(in_array($status, ['all', 'pending', 'submitted', 'under_review', 'returned', 'approved', 'paid', 'rejected', 'cancelled'], true), 422);
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
+        $requests = BenefitRequest::query()->with(['staff', 'benefitType', 'resultingBenefit'])->latest();
+        if ($status === 'pending') {
+            $requests->whereIn('status', [BenefitRequest::STATUS_SUBMITTED, BenefitRequest::STATUS_UNDER_REVIEW]);
+        } elseif ($status !== 'all') {
+            $requests->where('status', $status);
+        }
+
+        // Approved requests already have a linked benefit. Show those once in the request register.
+        $query = Benefit::query()->with(['staff', 'benefitType'])
+            ->whereNotIn('id', BenefitRequest::query()->select('resulting_benefit_id')->whereNotNull('resulting_benefit_id'))
+            ->latest();
+
+        if ($status !== 'all') {
+            $query->where('status', $status);
         }
 
         return view('admin.benefits.index', [
-            'benefits' => $query->paginate(50)->withQueryString(),
+            'benefits' => $query->paginate(50, ['*'], 'benefits_page')->withQueryString(),
+            'requests' => $requests->paginate(50, ['*'], 'requests_page')->withQueryString(),
             'pendingDeletionRequests' => BenefitDeletionRequest::query()->where('status', 'pending')->with(['benefit.staff', 'requester'])->latest()->get(),
-            'status' => $request->input('status'),
+            'status' => $status,
         ]);
     }
 
@@ -125,6 +140,11 @@ class BenefitController extends Controller
             'approved_date' => in_array($request->input('status'), [Benefit::STATUS_APPROVED, Benefit::STATUS_PAID], true) ? ($benefit->approved_date ?: now()->toDateString()) : $benefit->approved_date,
             'payment_date' => $request->input('status') === Benefit::STATUS_PAID ? ($request->input('payment_date') ?: now()->toDateString()) : $request->input('payment_date'),
         ]);
+        if ($benefit->status === Benefit::STATUS_PAID) {
+            BenefitRequest::query()->where('resulting_benefit_id', $benefit->id)
+                ->whereIn('status', [BenefitRequest::STATUS_APPROVED, BenefitRequest::STATUS_PAID])
+                ->update(['status' => BenefitRequest::STATUS_PAID]);
+        }
         $audit->log('benefit_updated', $benefit, $old, $benefit->fresh()->toArray());
 
         return redirect()->route('admin.benefits.index')->with('success', 'Benefit updated.');
@@ -143,6 +163,9 @@ class BenefitController extends Controller
             'approved_by' => $benefit->approved_by ?: $request->user()->id,
             'approved_date' => $benefit->approved_date ?: now()->toDateString(),
         ]);
+        BenefitRequest::query()->where('resulting_benefit_id', $benefit->id)
+            ->whereIn('status', [BenefitRequest::STATUS_APPROVED, BenefitRequest::STATUS_PAID])
+            ->update(['status' => BenefitRequest::STATUS_PAID]);
         $audit->log('benefit_marked_paid', $benefit, $old, $benefit->fresh()->toArray());
 
         return back()->with('success', 'Benefit marked as paid.');

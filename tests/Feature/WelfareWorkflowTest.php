@@ -480,6 +480,64 @@ class WelfareWorkflowTest extends TestCase
         $this->actingAs($admin)->get(route('admin.benefits.index'))->assertSee('Bereavement support');
     }
 
+    public function test_benefit_request_register_receipt_confirmation_and_print_record(): void
+    {
+        $admin = $this->admin();
+        $staff = $this->createStaffWithUser('RECEIPT01', 'Receipt Staff');
+        $type = BenefitType::query()->firstOrFail();
+        $requestRecord = BenefitRequest::query()->create([
+            'staff_id' => $staff->id,
+            'benefit_type_id' => $type->id,
+            'subject' => 'Medical assistance',
+            'description' => 'Staff request for medical assistance.',
+            'requested_amount' => 300,
+            'status' => BenefitRequest::STATUS_SUBMITTED,
+            'submitted_at' => now(),
+        ]);
+
+        $this->actingAs($admin)->get(route('admin.benefits.index', ['status' => 'pending']))
+            ->assertOk()->assertSee('Medical assistance');
+
+        $this->actingAs($admin)->post(route('admin.benefit-requests.review', $requestRecord), [
+            'status' => BenefitRequest::STATUS_APPROVED,
+            'approved_amount' => 280,
+            'review_notes' => 'Approved for payment.',
+        ])->assertSessionHasNoErrors();
+
+        $requestRecord->refresh();
+        $this->assertNotNull($requestRecord->approved_at);
+        $this->actingAs($admin)->get(route('admin.benefits.index', ['status' => 'approved']))
+            ->assertOk()->assertSee('Medical assistance');
+        $this->actingAs($admin)->get(route('admin.benefits.index', ['status' => 'pending']))
+            ->assertOk()->assertDontSee('Medical assistance');
+
+        $this->actingAs($staff->user)->post(route('staff.requests.confirm-receipt', $requestRecord), [
+            'received_amount' => 275,
+            'confirm_receipt' => '1',
+        ])->assertSessionHasNoErrors()->assertSessionHas('success');
+
+        $confirmedAt = $requestRecord->fresh()->receipt_confirmed_at;
+        $this->assertNotNull($confirmedAt);
+        $this->assertSame(275.0, (float) $requestRecord->fresh()->received_amount);
+        $this->actingAs($staff->user)->post(route('staff.requests.confirm-receipt', $requestRecord), [
+            'received_amount' => 280,
+            'confirm_receipt' => '1',
+        ])->assertSessionHasErrors('received_amount');
+        $this->assertSame(275.0, (float) $requestRecord->fresh()->received_amount);
+
+        $this->actingAs($staff->user)->get(route('staff.requests.print', $requestRecord))
+            ->assertOk()->assertSee('Approval date and time')->assertSee('275.00');
+        $this->actingAs($admin)->get(route('admin.benefit-requests.print', $requestRecord))
+            ->assertOk()->assertSee('Approval date and time')->assertSee('275.00');
+
+        $this->actingAs($admin)->post(route('admin.benefits.mark-paid', $requestRecord->resultingBenefit), [
+            'payment_date' => now()->toDateString(),
+        ])->assertSessionHasNoErrors();
+        $this->assertSame(BenefitRequest::STATUS_PAID, $requestRecord->fresh()->status);
+        $this->actingAs($admin)->get(route('admin.benefits.index', ['status' => 'paid']))
+            ->assertOk()->assertSee('Medical assistance');
+    }
+
     public function test_export_totals_match_database_totals(): void
     {
         $admin = $this->admin();

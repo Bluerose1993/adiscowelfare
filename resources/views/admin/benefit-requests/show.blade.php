@@ -1,6 +1,7 @@
 @extends('layouts.app', ['title' => 'Benefit Request'])
 
 @section('content')
+<div class="mb-3"><a class="btn btn-outline-primary" href="{{ route('admin.benefit-requests.print', $requestRecord) }}" target="_blank" rel="noopener"><i class="fas fa-print"></i> Print / Save PDF</a></div>
 <div class="mb-3"><button class="btn btn-outline-danger" data-toggle="collapse" data-target="#deleteBenefitRequest"><i class="fas fa-trash"></i> Delete Request</button></div><div class="collapse" id="deleteBenefitRequest"><div class="card card-danger"><form method="post" action="{{ route('admin.benefit-requests.deletion-request', $requestRecord) }}" class="card-body deletion-request-form">@csrf<div><strong>Delete this benefit request</strong><small class="d-block text-muted">A second admin must approve in Production mode.</small></div><input name="reason" class="form-control" placeholder="Reason for deletion" required><input name="password" type="password" class="form-control" placeholder="Your password" required><button class="btn btn-danger">Request Delete</button></form></div></div>
 <div class="row">
     <div class="col-lg-7">
@@ -12,6 +13,8 @@
                 <dt class="col-sm-4">Type</dt><dd class="col-sm-8">{{ $requestRecord->benefitType?->name }}</dd>
                 <dt class="col-sm-4">Requested Amount</dt><dd class="col-sm-8">{{ $requestRecord->requested_amount ? number_format($requestRecord->requested_amount, 2) : '-' }}</dd>
                 <dt class="col-sm-4">Approved Amount</dt><dd class="col-sm-8"><strong>{{ $requestRecord->approved_amount ? number_format($requestRecord->approved_amount, 2) : 'Not approved yet' }}</strong></dd>
+                <dt class="col-sm-4">Approved At</dt><dd class="col-sm-8">{{ $requestRecord->approved_at?->format('d M Y, H:i:s') ?: 'Not approved yet' }}</dd>
+                <dt class="col-sm-4">Staff Receipt</dt><dd class="col-sm-8">@if($requestRecord->receipt_confirmed_at)GHS {{ number_format($requestRecord->received_amount, 2) }} received on {{ $requestRecord->receipt_confirmed_at->format('d M Y, H:i:s') }}@if($requestRecord->approved_amount !== null && (float) $requestRecord->received_amount !== (float) $requestRecord->approved_amount)<span class="badge badge-warning ml-2">Amount differs from approval</span>@endif @else Awaiting staff confirmation @endif</dd>
                 <dt class="col-sm-4">Status</dt><dd class="col-sm-8"><span class="badge badge-info">{{ str_replace('_', ' ', $requestRecord->status) }}</span></dd>
                 <dt class="col-sm-4">Resulting Benefit</dt><dd class="col-sm-8">{{ $requestRecord->resultingBenefit ? $requestRecord->resultingBenefit->title : '-' }}</dd>
             </dl>
@@ -47,7 +50,7 @@
         <form method="post" action="{{ route('admin.benefit-requests.review', $requestRecord) }}">
             @csrf
             <div class="card card-primary"><div class="card-header"><h3 class="card-title">Review</h3></div><div class="card-body">
-                <div class="form-group"><label>Status</label><select name="status" class="form-control">@foreach(['under_review','approved','returned','rejected','cancelled','paid'] as $item)<option value="{{ $item }}">{{ $item === 'returned' ? 'Return for adjustment' : str_replace('_', ' ', ucfirst($item)) }}</option>@endforeach</select></div>
+                <div class="form-group"><label>Status</label><select name="status" class="form-control">@foreach(['under_review','approved','returned','rejected','cancelled','paid'] as $item)<option value="{{ $item }}" @selected(old('status', $requestRecord->status) === $item)>{{ $item === 'returned' ? 'Return for adjustment' : str_replace('_', ' ', ucfirst($item)) }}</option>@endforeach</select></div>
                 <div class="form-group"><label>Approved Amount</label><input name="approved_amount" type="number" step="0.01" min="0.01" class="form-control" value="{{ old('approved_amount', $requestRecord->approved_amount ?? $requestRecord->requested_amount) }}"><small class="text-muted">Adjust this before approval. The approved value becomes the benefit amount shown to staff.</small></div>
                 <div class="form-group"><label>Review Notes</label><textarea name="review_notes" class="form-control" rows="3">{{ old('review_notes') }}</textarea></div>
             </div><div class="card-footer"><button class="btn btn-primary"><i class="fas fa-check"></i> Save Review</button></div></div>

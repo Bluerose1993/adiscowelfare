@@ -26,11 +26,14 @@ class BenefitRequest extends Model
         'description',
         'requested_amount',
         'approved_amount',
+        'received_amount',
         'incident_date',
         'status',
         'submitted_at',
         'reviewed_by',
         'reviewed_at',
+        'approved_at',
+        'receipt_confirmed_at',
         'review_notes',
         'resulting_benefit_id',
     ];
@@ -40,9 +43,12 @@ class BenefitRequest extends Model
         return [
             'requested_amount' => 'decimal:2',
             'approved_amount' => 'decimal:2',
+            'received_amount' => 'decimal:2',
             'incident_date' => 'date',
             'submitted_at' => 'datetime',
             'reviewed_at' => 'datetime',
+            'approved_at' => 'datetime',
+            'receipt_confirmed_at' => 'datetime',
         ];
     }
 

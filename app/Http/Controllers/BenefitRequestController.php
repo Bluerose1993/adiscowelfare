@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class BenefitRequestController extends Controller
@@ -94,10 +95,21 @@ class BenefitRequestController extends Controller
         ]);
     }
 
+    public function adminPrint(BenefitRequest $benefitRequest): View
+    {
+        return view('benefit-requests.print', [
+            'requestRecord' => $benefitRequest->load(['staff', 'benefitType', 'reviewer']),
+        ]);
+    }
+
     public function review(ReviewBenefitRequestRequest $request, BenefitRequest $benefitRequest, BenefitService $benefits, AuditService $audit): RedirectResponse
     {
         $this->authorize('review', $benefitRequest);
         $old = $benefitRequest->toArray();
+
+        if ($benefitRequest->resulting_benefit_id && ! in_array($request->input('status'), [BenefitRequest::STATUS_APPROVED, BenefitRequest::STATUS_PAID], true)) {
+            throw ValidationException::withMessages(['status' => 'An approved benefit cannot be returned to a review status.']);
+        }
 
         if ($request->input('status') === BenefitRequest::STATUS_APPROVED) {
             $benefit = $benefits->approveRequest(
@@ -110,6 +122,23 @@ class BenefitRequestController extends Controller
             $audit->log('benefit_created_from_request', $benefit, [], $benefit->toArray());
 
             return redirect()->route('admin.benefits.index')->with('success', 'Benefit request approved and moved to All Benefits.');
+        }
+
+        if ($request->input('status') === BenefitRequest::STATUS_PAID) {
+            if (! $benefitRequest->resultingBenefit) {
+                throw ValidationException::withMessages(['status' => 'Approve this request before marking it paid.']);
+            }
+            DB::transaction(function () use ($request, $benefitRequest) {
+                $benefitRequest->resultingBenefit->update([
+                    'status' => 'paid',
+                    'payment_date' => $benefitRequest->resultingBenefit->payment_date ?: now()->toDateString(),
+                    'paid_by' => $request->user()->id,
+                ]);
+                $benefitRequest->update(['status' => BenefitRequest::STATUS_PAID]);
+            });
+            $audit->log('benefit_request_paid', $benefitRequest, $old, $benefitRequest->fresh()->toArray(), $request);
+
+            return redirect()->route('admin.benefits.index', ['status' => 'paid'])->with('success', 'Benefit marked as paid.');
         }
 
         $benefitRequest->update([
@@ -246,6 +275,44 @@ class BenefitRequestController extends Controller
 
         return view('staff.requests.show', [
             'requestRecord' => $benefitRequest->load(['benefitType', 'attachments', 'resultingBenefit']),
+        ]);
+    }
+
+    public function confirmReceipt(Request $request, BenefitRequest $benefitRequest, AuditService $audit): RedirectResponse
+    {
+        $this->authorize('view', $benefitRequest);
+        $validated = $request->validate([
+            'received_amount' => ['required', 'numeric', 'min:0.01', 'max:99999999.99'],
+            'confirm_receipt' => ['accepted'],
+        ]);
+
+        DB::transaction(function () use ($request, $benefitRequest, $validated, $audit) {
+            $record = BenefitRequest::query()->lockForUpdate()->findOrFail($benefitRequest->id);
+            if (! in_array($record->status, [BenefitRequest::STATUS_APPROVED, BenefitRequest::STATUS_PAID], true)
+                || $record->staff_id !== $request->user()->staff?->id || $record->receipt_confirmed_at) {
+                throw ValidationException::withMessages(['received_amount' => 'This request cannot be confirmed again or has not yet been approved.']);
+            }
+
+            $record->update([
+                'received_amount' => $validated['received_amount'],
+                'receipt_confirmed_at' => now(),
+            ]);
+            $audit->log('benefit_receipt_confirmed', $record, [], [
+                'received_amount' => $record->received_amount,
+                'approved_amount' => $record->approved_amount,
+                'receipt_confirmed_at' => $record->receipt_confirmed_at,
+            ], $request);
+        });
+
+        return back()->with('success', 'Your confirmation of the amount received has been recorded.');
+    }
+
+    public function staffPrint(BenefitRequest $benefitRequest): View
+    {
+        $this->authorize('view', $benefitRequest);
+
+        return view('benefit-requests.print', [
+            'requestRecord' => $benefitRequest->load(['staff', 'benefitType', 'reviewer']),
         ]);
     }
 }

@@ -15,6 +15,12 @@ class EnsureAdminModulePermission
             abort_unless($request->user()?->can('manage staff') || $request->user()?->can('manage dues'), 403, 'You do not have access to imports.');
             return $next($request);
         }
+        if ($name === 'admin.benefits.index' && ($request->user()?->can('manage benefits') || $request->user()?->can('review benefit requests'))) {
+            return $next($request);
+        }
+        if ($name === 'admin.benefit-requests.print' && ($request->user()?->can('manage benefits') || $request->user()?->can('review benefit requests'))) {
+            return $next($request);
+        }
         $permission = match (true) {
             $name === 'admin.dashboard' => 'view dashboard',
             str_starts_with($name, 'admin.administrators.') => 'manage administrators',
