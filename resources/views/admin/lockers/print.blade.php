@@ -27,9 +27,10 @@
 <body>
     <div class="toolbar"><button type="button" onclick="window.print()">Print / Save as PDF</button></div>
     <header>
-        <h1>{{ config('app.name') }} — Staff Locker Register</h1>
+        <h1>{{ \App\Models\Setting::value('application_name', config('app.name')) }} — Staff Locker Register</h1>
         <p>{{ $staff->count() }} staff record{{ $staff->count() === 1 ? '' : 's' }}</p>
         @if($search !== '')<p>Filtered by: {{ $search }}</p>@endif
+        <p>Locker status: {{ ['all' => 'All staff', 'assigned' => 'With locker numbers', 'unassigned' => 'Without locker numbers'][$assignment] }}</p>
         <p>Generated {{ now()->format('d M Y, h:i A') }}</p>
     </header>
     <table>

@@ -65,6 +65,7 @@ Route::middleware(['auth', 'role:Administrator', 'admin.module'])->prefix('admin
     Route::post('staff/import', [StaffImportController::class, 'store'])->name('staff.import');
     Route::get('lockers', [LockerController::class, 'adminIndex'])->name('lockers.index');
     Route::get('lockers/print', [LockerController::class, 'printRegister'])->name('lockers.print');
+    Route::get('lockers/export', [LockerController::class, 'exportRegister'])->name('lockers.export');
     Route::put('lockers/staff/{staff}', [LockerController::class, 'assign'])->name('lockers.assign');
     Route::post('lockers/requests/{lockerRequest}/approve', [LockerController::class, 'approve'])->name('lockers.approve');
     Route::post('lockers/requests/{lockerRequest}/reject', [LockerController::class, 'reject'])->name('lockers.reject');

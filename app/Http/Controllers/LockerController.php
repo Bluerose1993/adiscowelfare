@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\StaffLockersExport;
 use App\Models\LockerRequest;
 use App\Models\Staff;
 use App\Services\AuditService;
@@ -10,30 +11,56 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class LockerController extends Controller
 {
     public function adminIndex(Request $request): View
     {
-        $search = trim((string) $request->input('search'));
+        $filters = $this->filters($request);
         return view('admin.lockers.index', [
-            'staff' => Staff::query()->with('user')->search($search)->orderBy('full_name')->paginate(50)->withQueryString(),
+            'staff' => Staff::query()->search($filters['search'])->lockerAssignment($filters['assignment'])
+                ->orderBy('full_name')->paginate(50)->withQueryString(),
             'pendingRequests' => LockerRequest::query()->where('status', LockerRequest::STATUS_PENDING)->with('staff')->latest()->get(),
-            'search' => $search,
+            ...$filters,
         ]);
     }
 
     public function printRegister(Request $request): View
     {
-        $search = trim((string) $request->input('search'));
+        $filters = $this->filters($request);
 
         return view('admin.lockers.print', [
             'staff' => Staff::query()
-                ->search($search)
+                ->search($filters['search'])->lockerAssignment($filters['assignment'])
                 ->orderBy('full_name')
                 ->get(),
-            'search' => $search,
+            ...$filters,
         ]);
+    }
+
+    public function exportRegister(Request $request): BinaryFileResponse
+    {
+        $filters = $this->filters($request);
+
+        return Excel::download(
+            new StaffLockersExport($filters['search'], $filters['assignment']),
+            'staff-lockers-'.$filters['assignment'].'-'.now()->format('Y-m-d').'.xlsx'
+        );
+    }
+
+    private function filters(Request $request): array
+    {
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'assignment' => ['nullable', Rule::in(['all', 'assigned', 'unassigned'])],
+        ]);
+
+        return [
+            'search' => trim((string) ($validated['search'] ?? '')),
+            'assignment' => $validated['assignment'] ?? 'all',
+        ];
     }
 
     public function assign(Request $request, Staff $staff, AuditService $audit): RedirectResponse

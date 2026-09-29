@@ -90,4 +90,14 @@ class Staff extends Model
                 ->orWhere('phone', 'like', "%{$term}%");
         });
     }
+
+    public function scopeLockerAssignment(Builder $query, string $assignment): Builder
+    {
+        return match ($assignment) {
+            'assigned' => $query->whereNotNull('locker_number')->whereRaw("TRIM(locker_number) <> ''"),
+            'unassigned' => $query->where(fn (Builder $inner) => $inner
+                ->whereNull('locker_number')->orWhereRaw("TRIM(locker_number) = ''")),
+            default => $query,
+        };
+    }
 }
